@@ -27,6 +27,7 @@ let buttons = {};
 initSnake();
 drawSnakeCanvas();
 initThree();
+bindControls();
 animate(0);
 
 function initSnake() {
@@ -42,11 +43,10 @@ function initSnake() {
   score = 0;
   running = false;
   gameOver = false;
-
   food = spawnFood();
 
   scoreValue.textContent = score;
-  statusText.textContent = "Press Space to start";
+  statusText.textContent = "Press Start to play";
 }
 
 function spawnFood() {
@@ -60,6 +60,42 @@ function spawnFood() {
   } while (snake.some(part => part.x === spot.x && part.y === spot.y));
 
   return spot;
+}
+
+function startPauseRestart() {
+  if (gameOver) {
+    initSnake();
+    running = true;
+    statusText.textContent = "SnakeBoy is alive. Somehow.";
+    pressButton("start");
+    return;
+  }
+
+  running = !running;
+  statusText.textContent = running ? "SnakeBoy is alive. Somehow." : "Paused. Tap Start to continue.";
+  pressButton("start");
+}
+
+function setDirection(control) {
+  if (control === "up" && direction.y !== 1) {
+    nextDirection = { x: 0, y: -1 };
+    pressButton("dpad");
+  }
+
+  if (control === "down" && direction.y !== -1) {
+    nextDirection = { x: 0, y: 1 };
+    pressButton("dpad");
+  }
+
+  if (control === "left" && direction.x !== 1) {
+    nextDirection = { x: -1, y: 0 };
+    pressButton("dpad");
+  }
+
+  if (control === "right" && direction.x !== -1) {
+    nextDirection = { x: 1, y: 0 };
+    pressButton("dpad");
+  }
 }
 
 function updateSnake() {
@@ -84,7 +120,7 @@ function updateSnake() {
   if (hitWall || hitSelf) {
     gameOver = true;
     running = false;
-    statusText.textContent = "You crashed. Space to reboot the tiny idiot.";
+    statusText.textContent = "You crashed. Start to reboot the tiny idiot.";
     return;
   }
 
@@ -108,6 +144,7 @@ function drawSnakeCanvas() {
   drawLCDGrid();
   drawFood();
   drawSnake();
+  drawScreenVignette();
 
   if (!running && !gameOver && score === 0) {
     drawBootText("SNAKEBOY");
@@ -127,7 +164,7 @@ function drawLCDGrid() {
     }
   }
 
-  ctx.fillStyle = "rgba(15, 56, 15, 0.08)";
+  ctx.fillStyle = "rgba(15, 56, 15, 0.09)";
 
   for (let y = 0; y < snakeCanvas.height; y += 4) {
     ctx.fillRect(0, y, snakeCanvas.width, 1);
@@ -160,6 +197,14 @@ function drawFood() {
   ctx.fill();
 }
 
+function drawScreenVignette() {
+  const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 180);
+  gradient.addColorStop(0, "rgba(255,255,255,0)");
+  gradient.addColorStop(1, "rgba(15,56,15,0.18)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+}
+
 function drawBootText(text) {
   ctx.fillStyle = "rgba(15, 56, 15, 0.84)";
   ctx.fillRect(22, 94, 212, 68);
@@ -171,7 +216,7 @@ function drawBootText(text) {
   ctx.fillText(text, 128, 118);
 
   ctx.font = "10px monospace";
-  ctx.fillText("PRESS SPACE", 128, 143);
+  ctx.fillText("PRESS START", 128, 143);
 }
 
 function initThree() {
@@ -179,13 +224,13 @@ function initThree() {
   scene.background = new THREE.Color(0x0c0e13);
 
   camera = new THREE.PerspectiveCamera(
-    45,
+    38,
     mount.clientWidth / mount.clientHeight,
     0.1,
     100
   );
 
-  camera.position.set(0, 1.2, 8);
+  setCameraForViewport();
 
   renderer = new THREE.WebGLRenderer({
     antialias: true,
@@ -196,16 +241,20 @@ function initThree() {
   renderer.setSize(mount.clientWidth, mount.clientHeight);
   mount.appendChild(renderer.domElement);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.75);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.72);
   scene.add(ambient);
 
-  const key = new THREE.DirectionalLight(0xffffff, 1.2);
+  const key = new THREE.DirectionalLight(0xffffff, 1.35);
   key.position.set(4, 5, 6);
   scene.add(key);
 
-  const fill = new THREE.PointLight(0xa8c96d, 1.4, 10);
-  fill.position.set(-3, 2, 3);
-  scene.add(fill);
+  const rim = new THREE.PointLight(0xa8c96d, 1.25, 10);
+  rim.position.set(-3, 1.5, 3);
+  scene.add(rim);
+
+  const warm = new THREE.PointLight(0xffd8aa, 0.7, 10);
+  warm.position.set(3, -2, 4);
+  scene.add(warm);
 
   screenTexture = new THREE.CanvasTexture(snakeCanvas);
   screenTexture.magFilter = THREE.NearestFilter;
@@ -215,128 +264,206 @@ function initThree() {
   scene.add(gameBoy);
 
   window.addEventListener("resize", onResize);
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("keyup", handleKeyUp);
+}
+
+function setCameraForViewport() {
+  const isPhone = mount.clientWidth < 720;
+
+  if (isPhone) {
+    camera.position.set(0, 0.25, 8.2);
+  } else {
+    camera.position.set(0, 0.6, 7.2);
+  }
+
+  camera.lookAt(0, 0, 0);
 }
 
 function buildGameBoy() {
   const group = new THREE.Group();
 
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(3.8, 5.7, 0.45),
-    new THREE.MeshStandardMaterial({
-      color: 0xd8d3bd,
-      roughness: 0.62,
-      metalness: 0.05
-    })
-  );
+  const plastic = new THREE.MeshStandardMaterial({
+    color: 0xd8d2bd,
+    roughness: 0.68,
+    metalness: 0.03
+  });
 
-  body.position.y = -0.1;
-  group.add(body);
+  const darkPlastic = new THREE.MeshStandardMaterial({
+    color: 0x2d3240,
+    roughness: 0.54
+  });
 
-  const screenBezel = new THREE.Mesh(
-    new THREE.BoxGeometry(3.05, 2.35, 0.12),
-    new THREE.MeshStandardMaterial({
-      color: 0x333844,
-      roughness: 0.5
-    })
-  );
-
-  screenBezel.position.set(0, 1.25, 0.32);
-  group.add(screenBezel);
-
-  const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.28, 1.72),
-    new THREE.MeshBasicMaterial({
-      map: screenTexture
-    })
-  );
-
-  screen.position.set(0, 1.25, 0.39);
-  group.add(screen);
-
-  const logo = makeLabel("SNAKEBOY", 0, -0.08, 0.39, 0.5);
-  group.add(logo);
-
-  buttons.dpad = buildDpad();
-  buttons.dpad.position.set(-0.95, -1.35, 0.4);
-  group.add(buttons.dpad);
-
-  buttons.a = makeButton(0xff4f87);
-  buttons.a.position.set(1.13, -1.25, 0.43);
-  buttons.a.rotation.z = -0.25;
-  group.add(buttons.a);
-
-  buttons.b = makeButton(0xff4f87);
-  buttons.b.position.set(0.55, -1.55, 0.43);
-  buttons.b.rotation.z = -0.25;
-  group.add(buttons.b);
-
-  buttons.start = makePillButton();
-  buttons.start.position.set(0.38, -2.25, 0.43);
-  buttons.start.rotation.z = -0.18;
-  group.add(buttons.start);
-
-  buttons.select = makePillButton();
-  buttons.select.position.set(-0.38, -2.25, 0.43);
-  buttons.select.rotation.z = -0.18;
-  group.add(buttons.select);
-
-  const speaker = buildSpeaker();
-  speaker.position.set(1.1, -2.45, 0.39);
-  group.add(speaker);
-
-  const slot = new THREE.Mesh(
-    new THREE.BoxGeometry(2.25, 0.18, 0.08),
-    new THREE.MeshStandardMaterial({
-      color: 0xbab49d,
-      roughness: 0.7
-    })
-  );
-
-  slot.position.set(0, 2.65, 0.35);
-  group.add(slot);
-
-  group.rotation.x = -0.12;
-  group.rotation.y = -0.34;
-
-  return group;
-}
-
-function buildDpad() {
-  const group = new THREE.Group();
-
-  const mat = new THREE.MeshStandardMaterial({
+  const rubber = new THREE.MeshStandardMaterial({
     color: 0x20232b,
     roughness: 0.48
   });
 
-  const vertical = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.9, 0.15), mat);
-  const horizontal = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.28, 0.15), mat);
+  const red = new THREE.MeshStandardMaterial({
+    color: 0xde3156,
+    roughness: 0.35,
+    emissive: 0x330006
+  });
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(3.85, 5.85, 0.48),
+    plastic
+  );
+  body.position.y = -0.05;
+  group.add(body);
+
+  const facePlate = new THREE.Mesh(
+    new THREE.BoxGeometry(3.58, 5.52, 0.08),
+    plastic
+  );
+  facePlate.position.set(0, -0.05, 0.29);
+  group.add(facePlate);
+
+  const lowerLip = new THREE.Mesh(
+    new THREE.BoxGeometry(3.7, 0.18, 0.08),
+    new THREE.MeshStandardMaterial({
+      color: 0xc3bda8,
+      roughness: 0.72
+    })
+  );
+  lowerLip.position.set(0, -2.82, 0.35);
+  group.add(lowerLip);
+
+  const screenBezel = new THREE.Mesh(
+    new THREE.BoxGeometry(3.15, 2.38, 0.16),
+    darkPlastic
+  );
+  screenBezel.position.set(0, 1.33, 0.42);
+  group.add(screenBezel);
+
+  const screenGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(2.48, 1.84, 0.035),
+    new THREE.MeshStandardMaterial({
+      color: 0x151913,
+      roughness: 0.2,
+      metalness: 0.05
+    })
+  );
+  screenGlass.position.set(0, 1.26, 0.525);
+  group.add(screenGlass);
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.18, 1.58),
+    new THREE.MeshBasicMaterial({
+      map: screenTexture
+    })
+  );
+  screen.position.set(0, 1.26, 0.548);
+  group.add(screen);
+
+  const screenShine = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.18, 1.58),
+    new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.08
+    })
+  );
+  screenShine.position.set(0, 1.26, 0.552);
+  screenShine.rotation.z = -0.18;
+  group.add(screenShine);
+
+  const led = new THREE.Mesh(
+    new THREE.SphereGeometry(0.055, 20, 20),
+    red
+  );
+  led.position.set(-1.32, 1.78, 0.54);
+  group.add(led);
+
+  group.add(makeSmallLabel("BATTERY", -1.12, 1.77, 0.55, 0.26));
+  group.add(makeSmallLabel("DOT MATRIX WITH SNAKE", 0, 0.17, 0.55, 0.38));
+  group.add(makeSmallLabel("SNAKEBOY", 0, -0.17, 0.51, 0.55));
+
+  buttons.dpad = buildDpad(rubber);
+  buttons.dpad.position.set(-1.0, -1.28, 0.55);
+  group.add(buttons.dpad);
+
+  buttons.a = makeButton(0xbe2450);
+  buttons.a.position.set(1.14, -1.16, 0.58);
+  buttons.a.rotation.x = Math.PI / 2;
+  group.add(buttons.a);
+
+  buttons.b = makeButton(0xbe2450);
+  buttons.b.position.set(0.58, -1.47, 0.58);
+  buttons.b.rotation.x = Math.PI / 2;
+  group.add(buttons.b);
+
+  buttons.start = makePillButton(rubber);
+  buttons.start.position.set(0.38, -2.18, 0.56);
+  buttons.start.rotation.z = -0.16;
+  group.add(buttons.start);
+
+  buttons.select = makePillButton(rubber);
+  buttons.select.position.set(-0.38, -2.18, 0.56);
+  buttons.select.rotation.z = -0.16;
+  group.add(buttons.select);
+
+  group.add(makeSmallLabel("SELECT", -0.38, -2.42, 0.51, 0.22));
+  group.add(makeSmallLabel("START", 0.38, -2.42, 0.51, 0.22));
+
+  const speaker = buildSpeaker();
+  speaker.position.set(1.0, -2.45, 0.52);
+  group.add(speaker);
+
+  const slot = new THREE.Mesh(
+    new THREE.BoxGeometry(2.35, 0.16, 0.07),
+    new THREE.MeshStandardMaterial({
+      color: 0xb7b09c,
+      roughness: 0.75
+    })
+  );
+  slot.position.set(0, 2.72, 0.36);
+  group.add(slot);
+
+  addScrews(group);
+  addCornerDots(group);
+
+  group.rotation.x = -0.04;
+  group.rotation.y = -0.16;
+
+  return group;
+}
+
+function buildDpad(material) {
+  const group = new THREE.Group();
+
+  const vertical = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.96, 0.16), material);
+  const horizontal = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.3, 0.16), material);
+
+  const centre = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 0.05, 28),
+    new THREE.MeshStandardMaterial({
+      color: 0x15171d,
+      roughness: 0.5
+    })
+  );
+  centre.rotation.x = Math.PI / 2;
+  centre.position.z = 0.1;
 
   group.add(vertical);
   group.add(horizontal);
+  group.add(centre);
 
   return group;
 }
 
 function makeButton(color) {
   return new THREE.Mesh(
-    new THREE.CylinderGeometry(0.24, 0.24, 0.16, 32),
+    new THREE.CylinderGeometry(0.25, 0.25, 0.18, 40),
     new THREE.MeshStandardMaterial({
       color,
-      roughness: 0.38
+      roughness: 0.34
     })
   );
 }
 
-function makePillButton() {
+function makePillButton(material) {
   return new THREE.Mesh(
-    new THREE.BoxGeometry(0.55, 0.16, 0.11),
-    new THREE.MeshStandardMaterial({
-      color: 0x2a2d35,
-      roughness: 0.45
-    })
+    new THREE.BoxGeometry(0.56, 0.17, 0.11),
+    material
   );
 }
 
@@ -344,35 +471,76 @@ function buildSpeaker() {
   const group = new THREE.Group();
 
   const mat = new THREE.MeshStandardMaterial({
-    color: 0x8d8875,
-    roughness: 0.7
+    color: 0x8f8977,
+    roughness: 0.75
   });
 
   for (let i = 0; i < 6; i++) {
-    const hole = new THREE.Mesh(
-      new THREE.BoxGeometry(0.08, 0.42, 0.05),
+    const groove = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.48, 0.035),
       mat
     );
 
-    hole.position.x = i * 0.16;
-    hole.rotation.z = -0.5;
-    group.add(hole);
+    groove.position.x = i * 0.16;
+    groove.rotation.z = -0.52;
+    group.add(groove);
   }
 
   group.position.x -= 0.4;
-
   return group;
 }
 
-function makeLabel(text, x, y, z, size) {
+function addScrews(group) {
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xaaa38e,
+    roughness: 0.65
+  });
+
+  const positions = [
+    [-1.68, 2.55],
+    [1.68, 2.55],
+    [-1.68, -2.62],
+    [1.68, -2.62]
+  ];
+
+  positions.forEach(([x, y]) => {
+    const screw = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.065, 0.065, 0.025, 22),
+      mat
+    );
+
+    screw.rotation.x = Math.PI / 2;
+    screw.position.set(x, y, 0.55);
+    group.add(screw);
+  });
+}
+
+function addCornerDots(group) {
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xc8c1ac,
+    roughness: 0.7
+  });
+
+  for (let i = 0; i < 4; i++) {
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.035, 14, 14),
+      mat
+    );
+
+    dot.position.set(-1.48 + i * 0.22, 2.42, 0.55);
+    group.add(dot);
+  }
+}
+
+function makeSmallLabel(text, x, y, z, size) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 128;
 
   const labelCtx = canvas.getContext("2d");
   labelCtx.clearRect(0, 0, canvas.width, canvas.height);
-  labelCtx.fillStyle = "#2a2d35";
-  labelCtx.font = "bold 54px monospace";
+  labelCtx.fillStyle = "#282b33";
+  labelCtx.font = "bold 44px monospace";
   labelCtx.textAlign = "center";
   labelCtx.textBaseline = "middle";
   labelCtx.fillText(text, 256, 64);
@@ -391,69 +559,84 @@ function makeLabel(text, x, y, z, size) {
   return mesh;
 }
 
+function bindControls() {
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", releaseButtons);
+
+  document.querySelectorAll("[data-control]").forEach(button => {
+    button.addEventListener("pointerdown", event => {
+      event.preventDefault();
+
+      const control = button.dataset.control;
+
+      if (control === "start" || control === "a" || control === "b") {
+        startPauseRestart();
+        pressButton(control === "start" ? "start" : control);
+        return;
+      }
+
+      setDirection(control);
+    });
+
+    button.addEventListener("pointerup", releaseButtons);
+    button.addEventListener("pointercancel", releaseButtons);
+    button.addEventListener("pointerleave", releaseButtons);
+  });
+}
+
 function handleKeyDown(event) {
   const key = event.key.toLowerCase();
 
-  if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", " "].includes(key)) {
+  const blockedKeys = [
+    "arrowup",
+    "arrowdown",
+    "arrowleft",
+    "arrowright",
+    "w",
+    "a",
+    "s",
+    "d",
+    " "
+  ];
+
+  if (blockedKeys.includes(key)) {
     event.preventDefault();
   }
 
   if (key === " ") {
-    if (gameOver) {
-      initSnake();
-    }
-
-    running = !running;
-    statusText.textContent = running ? "SnakeBoy is running badly." : "Paused. Space to continue.";
-    pressButton("start");
+    startPauseRestart();
     return;
   }
 
-  if ((key === "arrowup" || key === "w") && direction.y !== 1) {
-    nextDirection = { x: 0, y: -1 };
-    pressButton("dpad");
-  }
-
-  if ((key === "arrowdown" || key === "s") && direction.y !== -1) {
-    nextDirection = { x: 0, y: 1 };
-    pressButton("dpad");
-  }
-
-  if ((key === "arrowleft" || key === "a") && direction.x !== 1) {
-    nextDirection = { x: -1, y: 0 };
-    pressButton("dpad");
-  }
-
-  if ((key === "arrowright" || key === "d") && direction.x !== -1) {
-    nextDirection = { x: 1, y: 0 };
-    pressButton("dpad");
-  }
-}
-
-function handleKeyUp() {
-  releaseButtons();
+  if (key === "arrowup" || key === "w") setDirection("up");
+  if (key === "arrowdown" || key === "s") setDirection("down");
+  if (key === "arrowleft" || key === "a") setDirection("left");
+  if (key === "arrowright" || key === "d") setDirection("right");
 }
 
 function pressButton(name) {
   const button = buttons[name];
-
   if (!button) return;
 
-  button.position.z = 0.34;
+  button.position.z -= 0.08;
+
+  clearTimeout(button.pressTimer);
+  button.pressTimer = setTimeout(() => {
+    releaseButtons();
+  }, 110);
 }
 
 function releaseButtons() {
-  Object.values(buttons).forEach(button => {
-    if (!button) return;
-    button.position.z = 0.43;
-  });
-
-  if (buttons.dpad) {
-    buttons.dpad.position.z = 0.4;
-  }
+  if (buttons.dpad) buttons.dpad.position.z = 0.55;
+  if (buttons.a) buttons.a.position.z = 0.58;
+  if (buttons.b) buttons.b.position.z = 0.58;
+  if (buttons.start) buttons.start.position.z = 0.56;
+  if (buttons.select) buttons.select.position.z = 0.56;
 }
 
 function onResize() {
+  setCameraForViewport();
+
   camera.aspect = mount.clientWidth / mount.clientHeight;
   camera.updateProjectionMatrix();
 
@@ -475,9 +658,12 @@ function animate(time) {
   }
 
   if (gameBoy) {
-    gameBoy.rotation.y = -0.34 + Math.sin(time * 0.0007) * 0.08;
-    gameBoy.rotation.x = -0.12 + Math.sin(time * 0.0009) * 0.035;
-    gameBoy.position.y = Math.sin(time * 0.001) * 0.08;
+    const isPhone = mount.clientWidth < 720;
+    const wobbleAmount = isPhone ? 0.025 : 0.06;
+
+    gameBoy.rotation.y = -0.16 + Math.sin(time * 0.0007) * wobbleAmount;
+    gameBoy.rotation.x = -0.04 + Math.sin(time * 0.0009) * 0.018;
+    gameBoy.position.y = Math.sin(time * 0.001) * 0.045;
   }
 
   renderer.render(scene, camera);
