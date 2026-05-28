@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -9,14 +10,9 @@
   --bg-2: #171a21;
   --panel: rgba(255, 255, 255, 0.06);
   --border: rgba(255, 255, 255, 0.08);
-
   --text: #f2f2f2;
   --muted: #9da3b1;
-
   --green-1: #a8c96d;
-  --green-2: #7f9f45;
-  --green-3: #2f4a1d;
-
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
@@ -25,17 +21,10 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
+  touch-action: none;
+  overscroll-behavior: none;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
-
   background:
     radial-gradient(circle at top, #252a38 0%, var(--bg-1) 45%),
     linear-gradient(to bottom, var(--bg-1), var(--bg-2));
@@ -49,94 +38,73 @@ body {
 
 .app-shell {
   width: min(1200px, 100%);
-  height: 100vh;
-
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-
-  padding: 24px;
-  gap: 20px;
+  padding: 16px;
+  gap: 14px;
 }
 
 .hud {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  padding: 18px 22px;
-
+  padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: 24px;
-
+  border-radius: 22px;
   background: var(--panel);
   backdrop-filter: blur(12px);
-
   box-shadow: var(--shadow);
+  z-index: 5;
 }
 
 .eyebrow {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   color: var(--muted);
-
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 h1 {
-  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-size: clamp(1.8rem, 7vw, 3.2rem);
   line-height: 1;
   font-weight: 800;
 }
 
 .score-card {
-  min-width: 120px;
-
+  min-width: 92px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
-  padding: 14px 18px;
-
   border-radius: 18px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(168, 201, 109, 0.18),
-      rgba(127, 159, 69, 0.08)
-    );
-
+  padding: 12px 14px;
+  background: linear-gradient(145deg, rgba(168, 201, 109, 0.18), rgba(127, 159, 69, 0.08));
   border: 1px solid rgba(168, 201, 109, 0.18);
 }
 
 .score-card span {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--muted);
-  margin-bottom: 4px;
 }
 
 .score-card strong {
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 800;
   color: var(--green-1);
 }
 
 .stage-card {
   position: relative;
-
   flex: 1;
-
-  border-radius: 30px;
+  min-height: 0;
+  border-radius: 28px;
   overflow: hidden;
-
   border: 1px solid var(--border);
-
   background:
     radial-gradient(circle at top, rgba(255,255,255,0.04), transparent 60%),
     linear-gradient(to bottom, #141821, #0c0e13);
-
   box-shadow: var(--shadow);
 }
 
@@ -147,42 +115,156 @@ h1 {
 
 .status-panel {
   position: absolute;
-  left: 24px;
-  bottom: 24px;
-
-  padding: 16px 18px;
-
-  border-radius: 18px;
-
-  background: rgba(0, 0, 0, 0.45);
+  left: 16px;
+  right: 16px;
+  bottom: 128px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.42);
   border: 1px solid rgba(255,255,255,0.08);
-
   backdrop-filter: blur(10px);
-
-  max-width: 420px;
+  z-index: 4;
+  pointer-events: none;
 }
 
 #statusText {
-  font-size: 1rem;
-  font-weight: 700;
-
-  margin-bottom: 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 6px;
 }
 
 .controls {
   color: var(--muted);
-  line-height: 1.5;
-  font-size: 0.9rem;
+  line-height: 1.4;
+  font-size: 0.82rem;
+}
+
+.touch-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.touch-dpad {
+  position: relative;
+  width: 112px;
+  height: 92px;
+  pointer-events: auto;
+}
+
+.touch-btn,
+.touch-action,
+.touch-start {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(0, 0, 0, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 10px 25px rgba(0,0,0,0.28);
+  backdrop-filter: blur(10px);
+  user-select: none;
+  touch-action: none;
+}
+
+.touch-btn {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.touch-up {
+  left: 35px;
+  top: 0;
+}
+
+.touch-left {
+  left: 0;
+  top: 44px;
+}
+
+.touch-right {
+  right: 0;
+  top: 44px;
+}
+
+.touch-down {
+  left: 35px;
+  top: 44px;
+}
+
+.touch-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+.touch-action {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.touch-a {
+  transform: translateY(-12px);
+}
+
+.touch-b {
+  transform: translateY(10px);
+}
+
+.touch-start {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  height: 34px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  pointer-events: auto;
+}
+
+.touch-btn:active,
+.touch-action:active,
+.touch-start:active {
+  transform: scale(0.94);
+  background: rgba(168, 201, 109, 0.22);
+}
+
+.touch-a:active {
+  transform: translateY(-12px) scale(0.94);
+}
+
+.touch-b:active {
+  transform: translateY(10px) scale(0.94);
+}
+
+.touch-start:active {
+  transform: translateX(-50%) scale(0.94);
 }
 
 #snakeCanvas {
   position: absolute;
   opacity: 0;
   pointer-events: none;
-
   width: 256px;
   height: 256px;
-
   left: -9999px;
   top: -9999px;
 }
@@ -191,30 +273,32 @@ canvas {
   display: block;
 }
 
-@media (max-width: 720px) {
+@media (min-width: 800px) {
   .app-shell {
-    padding: 14px;
-    gap: 14px;
+    padding: 24px;
+    gap: 20px;
   }
 
   .hud {
-    padding: 16px;
-    border-radius: 20px;
-  }
-
-  .status-panel {
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
-
-    max-width: unset;
+    padding: 18px 22px;
   }
 
   .score-card {
-    min-width: 92px;
+    min-width: 120px;
   }
 
   .score-card strong {
-    font-size: 1.6rem;
+    font-size: 2rem;
+  }
+
+  .status-panel {
+    left: 24px;
+    right: auto;
+    bottom: 24px;
+    max-width: 440px;
+  }
+
+  .touch-controls {
+    opacity: 0.68;
   }
 }
