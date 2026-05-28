@@ -121,13 +121,18 @@ function setDirection(control) {
 function triggerControl(control) {
   if (!control) return;
 
-  if (control === "start") {
+  if (control === "start" || control === "select") {
     startPauseRestart();
     return;
   }
 
   if (control === "a" || control === "b") {
     pressButton(control);
+
+    if (!running && !gameOver) {
+      startPauseRestart();
+    }
+
     return;
   }
 
@@ -495,10 +500,10 @@ function buildGameBoy() {
   buttons.dpad.position.set(-1.0, -1.28, 0.55);
   group.add(buttons.dpad);
 
-  addControlHitbox(group, "up", -1.0, -0.94, 0.72, 0.58, 0.58);
-  addControlHitbox(group, "down", -1.0, -1.62, 0.72, 0.58, 0.58);
-  addControlHitbox(group, "left", -1.34, -1.28, 0.72, 0.58, 0.58);
-  addControlHitbox(group, "right", -0.66, -1.28, 0.72, 0.58, 0.58);
+  addControlHitbox(group, "up", -1.0, -0.91, 0.82, 0.72, 0.64);
+addControlHitbox(group, "down", -1.0, -1.65, 0.82, 0.72, 0.64);
+addControlHitbox(group, "left", -1.37, -1.28, 0.82, 0.64, 0.72);
+addControlHitbox(group, "right", -0.63, -1.28, 0.82, 0.64, 0.72);
 
   buttons.a = makeButton(0xbe2450);
   buttons.a.position.set(1.14, -1.16, 0.58);
@@ -506,6 +511,7 @@ function buildGameBoy() {
   buttons.a.userData.control = "a";
   group.add(buttons.a);
   clickableControls.push(buttons.a);
+  addControlHitbox(group, "a", 1.14, -1.16, 0.84, 0.72, 0.72);
 
   buttons.b = makeButton(0xbe2450);
   buttons.b.position.set(0.58, -1.47, 0.58);
@@ -513,6 +519,7 @@ function buildGameBoy() {
   buttons.b.userData.control = "b";
   group.add(buttons.b);
   clickableControls.push(buttons.b);
+  addControlHitbox(group, "b", 0.58, -1.47, 0.84, 0.72, 0.72);
 
   buttons.start = makePillButton(rubber);
   buttons.start.position.set(0.38, -2.18, 0.56);
@@ -520,7 +527,8 @@ function buildGameBoy() {
   buttons.start.userData.control = "start";
   group.add(buttons.start);
   clickableControls.push(buttons.start);
-  addControlHitbox(group, "start", 0.38, -2.18, 0.72, 0.78, 0.46);
+  addControlHitbox(group, "start", 0.38, -2.18, 0.84, 0.92, 0.56);
+addControlHitbox(group, "select", -0.38, -2.18, 0.84, 0.92, 0.56);
 
   buttons.select = makePillButton(rubber);
   buttons.select.position.set(-0.38, -2.18, 0.56);
@@ -707,7 +715,12 @@ function handleThreePointer(event) {
 
   if (!hits.length) return;
 
-  const control = hits[0].object.userData.control;
+  const hit = hits.find(item => item.object.userData.control);
+
+  if (!hit) return;
+
+  const control = hit.object.userData.control;
+
   triggerControl(control);
 }
 
