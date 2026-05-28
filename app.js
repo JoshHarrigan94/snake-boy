@@ -20,6 +20,9 @@ let lastTick = 0;
 let inputLocked = false;
 let screenFlash = 0;
 let orbitControls;
+let pointerDownX = 0;
+let pointerDownY = 0;
+let pointerMoved = false;
 
 let scene;
 let camera;
@@ -385,14 +388,12 @@ function initThree() {
 orbitControls.enableDamping = true;
 orbitControls.dampingFactor = 0.08;
 
-orbitControls.enablePan = true;
-orbitControls.panSpeed = 0.45;
-
+orbitControls.enablePan = false;
 orbitControls.enableZoom = true;
-orbitControls.zoomSpeed = 0.8;
-
 orbitControls.enableRotate = true;
-orbitControls.rotateSpeed = 0.45;
+
+orbitControls.rotateSpeed = 0.35;
+orbitControls.zoomSpeed = 0.65;
 
 orbitControls.minDistance = 7.5;
 orbitControls.maxDistance = 15;
@@ -425,8 +426,23 @@ orbitControls.update();
   gameBoy = buildGameBoy();
   scene.add(gameBoy);
 
-  renderer.domElement.addEventListener("pointerdown", handleThreePointer);
+  renderer.domElement.addEventListener("pointerup", handleThreePointer);
   window.addEventListener("resize", onResize);
+  renderer.domElement.addEventListener("pointerdown", event => {
+  pointerDownX = event.clientX;
+  pointerDownY = event.clientY;
+  pointerMoved = false;
+});
+
+renderer.domElement.addEventListener("pointermove", event => {
+  const dx = event.clientX - pointerDownX;
+  const dy = event.clientY - pointerDownY;
+
+  if (Math.hypot(dx, dy) > 8) {
+    pointerMoved = true;
+  }
+});
+
 }
 
 function setCameraForViewport() {
@@ -759,6 +775,8 @@ function makeSmallLabel(text, x, y, z, size) {
 }
 
 function handleThreePointer(event) {
+  if (pointerMoved) return;
+
   event.preventDefault();
 
   const rect = renderer.domElement.getBoundingClientRect();
@@ -776,9 +794,7 @@ function handleThreePointer(event) {
 
   if (!hit) return;
 
-  const control = hit.object.userData.control;
-
-  triggerControl(control);
+  triggerControl(hit.object.userData.control);
 }
 
 function bindControls() {
