@@ -24,6 +24,10 @@ let screenTexture;
 let gameBoy;
 let buttons = {};
 
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const clickableControls = [];
+
 initSnake();
 drawSnakeCanvas();
 initThree();
@@ -72,7 +76,10 @@ function startPauseRestart() {
   }
 
   running = !running;
-  statusText.textContent = running ? "SnakeBoy is alive. Somehow." : "Paused. Tap Start to continue.";
+  statusText.textContent = running
+    ? "SnakeBoy is alive. Somehow."
+    : "Paused. Tap Start to continue.";
+
   pressButton("start");
 }
 
@@ -103,6 +110,22 @@ function setDirection(control) {
   }
 }
 
+function triggerControl(control) {
+  if (!control) return;
+
+  if (control === "start") {
+    startPauseRestart();
+    return;
+  }
+
+  if (control === "a" || control === "b") {
+    pressButton(control);
+    return;
+  }
+
+  setDirection(control);
+}
+
 function updateSnake() {
   if (!running || gameOver) return;
 
@@ -120,7 +143,9 @@ function updateSnake() {
     nextHead.y < 0 ||
     nextHead.y >= GRID;
 
-  const hitSelf = snake.some(part => part.x === nextHead.x && part.y === nextHead.y);
+  const hitSelf = snake.some(
+    part => part.x === nextHead.x && part.y === nextHead.y
+  );
 
   if (hitWall || hitSelf) {
     gameOver = true;
@@ -268,6 +293,7 @@ function initThree() {
   gameBoy = buildGameBoy();
   scene.add(gameBoy);
 
+  renderer.domElement.addEventListener("pointerdown", handleThreePointer);
   window.addEventListener("resize", onResize);
 }
 
@@ -371,10 +397,7 @@ function buildGameBoy() {
   screenShine.rotation.z = -0.18;
   group.add(screenShine);
 
-  const led = new THREE.Mesh(
-    new THREE.SphereGeometry(0.055, 20, 20),
-    red
-  );
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.055, 20, 20), red);
   led.position.set(-1.32, 1.78, 0.54);
   group.add(led);
 
@@ -386,24 +409,38 @@ function buildGameBoy() {
   buttons.dpad.position.set(-1.0, -1.28, 0.55);
   group.add(buttons.dpad);
 
+  addControlHitbox(group, "up", -1.0, -0.94, 0.72, 0.52, 0.52);
+  addControlHitbox(group, "down", -1.0, -1.62, 0.72, 0.52, 0.52);
+  addControlHitbox(group, "left", -1.34, -1.28, 0.72, 0.52, 0.52);
+  addControlHitbox(group, "right", -0.66, -1.28, 0.72, 0.52, 0.52);
+
   buttons.a = makeButton(0xbe2450);
   buttons.a.position.set(1.14, -1.16, 0.58);
   buttons.a.rotation.x = Math.PI / 2;
+  buttons.a.userData.control = "a";
   group.add(buttons.a);
+  clickableControls.push(buttons.a);
 
   buttons.b = makeButton(0xbe2450);
   buttons.b.position.set(0.58, -1.47, 0.58);
   buttons.b.rotation.x = Math.PI / 2;
+  buttons.b.userData.control = "b";
   group.add(buttons.b);
+  clickableControls.push(buttons.b);
 
   buttons.start = makePillButton(rubber);
   buttons.start.position.set(0.38, -2.18, 0.56);
   buttons.start.rotation.z = -0.16;
+  buttons.start.userData.control = "start";
   group.add(buttons.start);
+  clickableControls.push(buttons.start);
+
+  addControlHitbox(group, "start", 0.38, -2.18, 0.72, 0.7, 0.42);
 
   buttons.select = makePillButton(rubber);
   buttons.select.position.set(-0.38, -2.18, 0.56);
   buttons.select.rotation.z = -0.16;
+  buttons.select.userData.control = "select";
   group.add(buttons.select);
 
   group.add(makeSmallLabel("SELECT", -0.38, -2.42, 0.51, 0.22));
@@ -445,6 +482,7 @@ function buildDpad(material) {
       roughness: 0.5
     })
   );
+
   centre.rotation.x = Math.PI / 2;
   centre.position.z = 0.1;
 
@@ -466,10 +504,7 @@ function makeButton(color) {
 }
 
 function makePillButton(material) {
-  return new THREE.Mesh(
-    new THREE.BoxGeometry(0.56, 0.17, 0.11),
-    material
-  );
+  return new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.17, 0.11), material);
 }
 
 function buildSpeaker() {
@@ -481,11 +516,7 @@ function buildSpeaker() {
   });
 
   for (let i = 0; i < 6; i++) {
-    const groove = new THREE.Mesh(
-      new THREE.BoxGeometry(0.07, 0.48, 0.035),
-      mat
-    );
-
+    const groove = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.48, 0.035), mat);
     groove.position.x = i * 0.16;
     groove.rotation.z = -0.52;
     group.add(groove);
@@ -509,11 +540,7 @@ function addScrews(group) {
   ];
 
   positions.forEach(([x, y]) => {
-    const screw = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.065, 0.065, 0.025, 22),
-      mat
-    );
-
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.025, 22), mat);
     screw.rotation.x = Math.PI / 2;
     screw.position.set(x, y, 0.55);
     group.add(screw);
@@ -527,14 +554,30 @@ function addCornerDots(group) {
   });
 
   for (let i = 0; i < 4; i++) {
-    const dot = new THREE.Mesh(
-      new THREE.SphereGeometry(0.035, 14, 14),
-      mat
-    );
-
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.035, 14, 14), mat);
     dot.position.set(-1.48 + i * 0.22, 2.42, 0.55);
     group.add(dot);
   }
+}
+
+function addControlHitbox(group, control, x, y, z, width, height) {
+  const hitbox = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, 0.08),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false
+    })
+  );
+
+  hitbox.position.set(x, y, z);
+  hitbox.userData.control = control;
+  hitbox.name = `hitbox-${control}`;
+
+  group.add(hitbox);
+  clickableControls.push(hitbox);
+
+  return hitbox;
 }
 
 function makeSmallLabel(text, x, y, z, size) {
@@ -564,6 +607,24 @@ function makeSmallLabel(text, x, y, z, size) {
   return mesh;
 }
 
+function handleThreePointer(event) {
+  event.preventDefault();
+
+  const rect = renderer.domElement.getBoundingClientRect();
+
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(pointer, camera);
+
+  const hits = raycaster.intersectObjects(clickableControls, true);
+
+  if (!hits.length) return;
+
+  const control = hits[0].object.userData.control;
+  triggerControl(control);
+}
+
 function bindControls() {
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", releaseButtons);
@@ -571,20 +632,7 @@ function bindControls() {
   document.querySelectorAll("[data-control]").forEach(button => {
     button.addEventListener("pointerdown", event => {
       event.preventDefault();
-
-      const control = button.dataset.control;
-
-      if (control === "start") {
-  startPauseRestart();
-  return;
-}
-
-if (control === "a" || control === "b") {
-  pressButton(control);
-  return;
-}
-
-      setDirection(control);
+      triggerControl(button.dataset.control);
     });
 
     button.addEventListener("pointerup", releaseButtons);
@@ -613,14 +661,14 @@ function handleKeyDown(event) {
   }
 
   if (key === " ") {
-    startPauseRestart();
+    triggerControl("start");
     return;
   }
 
-  if (key === "arrowup" || key === "w") setDirection("up");
-  if (key === "arrowdown" || key === "s") setDirection("down");
-  if (key === "arrowleft" || key === "a") setDirection("left");
-  if (key === "arrowright" || key === "d") setDirection("right");
+  if (key === "arrowup" || key === "w") triggerControl("up");
+  if (key === "arrowdown" || key === "s") triggerControl("down");
+  if (key === "arrowleft" || key === "a") triggerControl("left");
+  if (key === "arrowright" || key === "d") triggerControl("right");
 }
 
 function pressButton(name) {
