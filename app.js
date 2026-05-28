@@ -19,6 +19,7 @@ let paused;
 let lastTick = 0;
 let inputLocked = false;
 let screenFlash = 0;
+let orbitControls;
 
 let scene;
 let camera;
@@ -378,6 +379,29 @@ function initThree() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(mount.clientWidth, mount.clientHeight);
   mount.appendChild(renderer.domElement);
+  
+  orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+
+orbitControls.enableDamping = true;
+orbitControls.dampingFactor = 0.08;
+
+orbitControls.enablePan = true;
+orbitControls.panSpeed = 0.45;
+
+orbitControls.enableZoom = true;
+orbitControls.zoomSpeed = 0.8;
+
+orbitControls.enableRotate = true;
+orbitControls.rotateSpeed = 0.45;
+
+orbitControls.minDistance = 7.5;
+orbitControls.maxDistance = 15;
+
+orbitControls.minPolarAngle = Math.PI * 0.35;
+orbitControls.maxPolarAngle = Math.PI * 0.65;
+
+orbitControls.target.set(0, -0.1, 0);
+orbitControls.update();
 
   const ambient = new THREE.AmbientLight(0xffffff, 0.72);
   scene.add(ambient);
@@ -843,6 +867,10 @@ function animate(time) {
   gameBoy.rotation.y = -0.055 + Math.sin(time * 0.0007) * wobbleAmount;
   gameBoy.rotation.x = -0.018 + Math.sin(time * 0.0009) * 0.004;
   gameBoy.position.y = 0.08 + Math.sin(time * 0.001) * floatAmount;
+}
+
+if (orbitControls) {
+  orbitControls.update();
 }
 
   renderer.render(scene, camera);
