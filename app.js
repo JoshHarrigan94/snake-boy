@@ -1,20 +1,21 @@
 const mount = document.getElementById("threeMount");
 const snakeCanvas = document.getElementById("snakeCanvas");
 const ctx = snakeCanvas.getContext("2d");
-const scoreValue = document.getElementById("scoreValue");
-const statusText = document.getElementById("statusText");
 
 const GRID = 16;
 const CELL = snakeCanvas.width / GRID;
-const TICK_MS = 135;
+const BASE_TICK_MS = 140;
+const HIGH_SCORE_KEY = "snakeboy-high-score";
 
 let snake;
 let food;
 let direction;
 let nextDirection;
 let score;
+let highScore;
 let running;
 let gameOver;
+let paused;
 let lastTick = 0;
 
 let scene;
@@ -36,21 +37,22 @@ animate(0);
 
 function initSnake() {
   snake = [
-    { x: 8, y: 8 },
-    { x: 7, y: 8 },
-    { x: 6, y: 8 }
+    { x: 8, y: 9 },
+    { x: 7, y: 9 },
+    { x: 6, y: 9 }
   ];
 
   direction = { x: 1, y: 0 };
   nextDirection = { x: 1, y: 0 };
 
   score = 0;
-  running = false;
-  gameOver = false;
-  food = spawnFood();
+  highScore = Number(localStorage.getItem(HIGH_SCORE_KEY) || 0);
 
-  scoreValue.textContent = score;
-  statusText.textContent = "Press Start to play";
+  running = false;
+  paused = false;
+  gameOver = false;
+
+  food = spawnFood();
 }
 
 function spawnFood() {
@@ -59,7 +61,7 @@ function spawnFood() {
   do {
     spot = {
       x: Math.floor(Math.random() * GRID),
-      y: Math.floor(Math.random() * GRID)
+      y: Math.floor(Math.random() * (GRID - 2)) + 2
     };
   } while (snake.some(part => part.x === spot.x && part.y === spot.y));
 
@@ -70,24 +72,30 @@ function startPauseRestart() {
   if (gameOver) {
     initSnake();
     running = true;
-    statusText.textContent = "SnakeBoy is alive. Somehow.";
+    paused = false;
     pressButton("start");
     return;
   }
 
-  running = !running;
-  statusText.textContent = running
-    ? "SnakeBoy is alive. Somehow."
-    : "Paused. Tap Start to continue.";
+  if (!running) {
+    running = true;
+    paused = false;
+    pressButton("start");
+    return;
+  }
 
+  paused = !paused;
+  running = !paused;
   pressButton("start");
 }
 
 function setDirection(control) {
   if (!running && !gameOver) {
     running = true;
-    statusText.textContent = "SnakeBoy is alive. Somehow.";
+    paused = false;
   }
+
+  if (gameOver || paused) return;
 
   if (control === "up" && direction.y !== 1) {
     nextDirection = { x: 0, y: -1 };
@@ -127,11 +135,12 @@ function triggerControl(control) {
 }
 
 function updateSnake() {
-  if (!running || gameOver) return;
+  if (!running || paused || gameOver) return;
 
   direction = nextDirection;
 
   const head = snake[0];
+
   const nextHead = {
     x: head.x + direction.x,
     y: head.y + direction.y
@@ -140,7 +149,7 @@ function updateSnake() {
   const hitWall =
     nextHead.x < 0 ||
     nextHead.x >= GRID ||
-    nextHead.y < 0 ||
+    nextHead.y < 2 ||
     nextHead.y >= GRID;
 
   const hitSelf = snake.some(
@@ -150,7 +159,8 @@ function updateSnake() {
   if (hitWall || hitSelf) {
     gameOver = true;
     running = false;
-    statusText.textContent = "You crashed. Start to reboot the tiny idiot.";
+    paused = false;
+    saveHighScore();
     return;
   }
 
@@ -160,45 +170,89 @@ function updateSnake() {
 
   if (ateFood) {
     score += 10;
-    scoreValue.textContent = score;
+    saveHighScore();
     food = spawnFood();
   } else {
     snake.pop();
   }
 }
 
-function drawSnakeCanvas() {
-  ctx.fillStyle = "#9bbc0f";
-  ctx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.height);
-
-  drawLCDGrid();
-  drawFood();
-  drawSnake();
-  drawScreenVignette();
-
-  if (!running && !gameOver && score === 0) {
-    drawBootText("SNAKEBOY");
-  }
-
-  if (gameOver) {
-    drawBootText("DEAD LOL");
+function saveHighScore() {
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem(HIGH_SCORE_KEY, String(highScore));
   }
 }
 
+function currentTickSpeed() {
+  const speedBoost = Math.floor(score / 50) * 6;
+  return Math.max(76, BASE_TICK_MS - speedBoost);
+}
+
+function drawSnakeCanvas() {
+  drawLCDBase();
+  drawLCDGrid();
+  drawScoreBar();
+
+  if (running && !paused && !gameOver) {
+    drawFood();
+    drawSnake();
+  } else {
+    drawFood();
+    drawSnake();
+  }
+
+  drawScreenVignette();
+
+  if (!running && !paused && !gameOver && score === 0) {
+    drawBootScreen();
+  }
+
+  if (paused) {
+    drawMessagePanel("PAUSED", "PRESS START");
+  }
+
+  if (gameOver) {
+    drawMessagePanel("DEAD LOL", "START TO REBOOT");
+  }
+}
+
+function drawLCDBase() {
+  ctx.fillStyle = "#9bbc0f";
+  ctx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+
+  ctx.fillStyle = "rgba(15, 56, 15, 0.05)";
+  ctx.fillRect(0, 0, 256, 28);
+}
+
 function drawLCDGrid() {
-  ctx.fillStyle = "rgba(15, 56, 15, 0.08)";
+  ctx.fillStyle = "rgba(15, 56, 15, 0.07)";
 
   for (let x = 0; x < GRID; x++) {
-    for (let y = 0; y < GRID; y++) {
+    for (let y = 2; y < GRID; y++) {
       ctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2);
     }
   }
 
-  ctx.fillStyle = "rgba(15, 56, 15, 0.09)";
+  ctx.fillStyle = "rgba(15, 56, 15, 0.08)";
 
   for (let y = 0; y < snakeCanvas.height; y += 4) {
     ctx.fillRect(0, y, snakeCanvas.width, 1);
   }
+}
+
+function drawScoreBar() {
+  ctx.fillStyle = "#0f380f";
+  ctx.font = "bold 10px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`SCORE ${String(score).padStart(3, "0")}`, 8, 14);
+
+  ctx.textAlign = "right";
+  ctx.fillText(`HI ${String(highScore).padStart(3, "0")}`, 248, 14);
+
+  ctx.fillStyle = "rgba(15, 56, 15, 0.35)";
+  ctx.fillRect(0, 27, 256, 2);
 }
 
 function drawSnake() {
@@ -225,28 +279,58 @@ function drawFood() {
     Math.PI * 2
   );
   ctx.fill();
+
+  ctx.fillStyle = "rgba(155,188,15,0.45)";
+  ctx.beginPath();
+  ctx.arc(
+    food.x * CELL + CELL / 2 - 2,
+    food.y * CELL + CELL / 2 - 2,
+    CELL * 0.12,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
 }
 
 function drawScreenVignette() {
   const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 180);
   gradient.addColorStop(0, "rgba(255,255,255,0)");
-  gradient.addColorStop(1, "rgba(15,56,15,0.18)");
+  gradient.addColorStop(1, "rgba(15,56,15,0.16)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 256, 256);
 }
 
-function drawBootText(text) {
-  ctx.fillStyle = "rgba(15, 56, 15, 0.84)";
-  ctx.fillRect(22, 94, 212, 68);
+function drawBootScreen() {
+  ctx.fillStyle = "rgba(15, 56, 15, 0.9)";
+  ctx.fillRect(24, 78, 208, 96);
 
   ctx.fillStyle = "#9bbc0f";
   ctx.font = "bold 24px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, 128, 118);
+  ctx.fillText("SNAKEBOY", 128, 106);
 
-  ctx.font = "10px monospace";
-  ctx.fillText("PRESS START", 128, 143);
+  ctx.font = "bold 10px monospace";
+  ctx.fillText("3D HANDHELD EDITION", 128, 130);
+  ctx.fillText("PRESS START", 128, 153);
+}
+
+function drawMessagePanel(title, subtitle) {
+  ctx.fillStyle = "rgba(15, 56, 15, 0.9)";
+  ctx.fillRect(26, 88, 204, 78);
+
+  ctx.strokeStyle = "#9bbc0f";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(30, 92, 196, 70);
+
+  ctx.fillStyle = "#9bbc0f";
+  ctx.font = "bold 22px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(title, 128, 116);
+
+  ctx.font = "bold 10px monospace";
+  ctx.fillText(subtitle, 128, 142);
 }
 
 function initThree() {
@@ -301,12 +385,12 @@ function setCameraForViewport() {
   const isPhone = mount.clientWidth < 720;
 
   if (isPhone) {
-    camera.position.set(0, 0.25, 8.2);
+    camera.position.set(0, 0.15, 8.55);
   } else {
-    camera.position.set(0, 0.6, 7.2);
+    camera.position.set(0, 0.5, 7.35);
   }
 
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(0, -0.1, 0);
 }
 
 function buildGameBoy() {
@@ -334,17 +418,11 @@ function buildGameBoy() {
     emissive: 0x330006
   });
 
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(3.85, 5.85, 0.48),
-    plastic
-  );
+  const body = new THREE.Mesh(new THREE.BoxGeometry(3.85, 5.85, 0.48), plastic);
   body.position.y = -0.05;
   group.add(body);
 
-  const facePlate = new THREE.Mesh(
-    new THREE.BoxGeometry(3.58, 5.52, 0.08),
-    plastic
-  );
+  const facePlate = new THREE.Mesh(new THREE.BoxGeometry(3.58, 5.52, 0.08), plastic);
   facePlate.position.set(0, -0.05, 0.29);
   group.add(facePlate);
 
@@ -358,10 +436,7 @@ function buildGameBoy() {
   lowerLip.position.set(0, -2.82, 0.35);
   group.add(lowerLip);
 
-  const screenBezel = new THREE.Mesh(
-    new THREE.BoxGeometry(3.15, 2.38, 0.16),
-    darkPlastic
-  );
+  const screenBezel = new THREE.Mesh(new THREE.BoxGeometry(3.15, 2.38, 0.16), darkPlastic);
   screenBezel.position.set(0, 1.33, 0.42);
   group.add(screenBezel);
 
@@ -369,8 +444,8 @@ function buildGameBoy() {
     new THREE.BoxGeometry(2.48, 1.84, 0.035),
     new THREE.MeshStandardMaterial({
       color: 0x151913,
-      roughness: 0.2,
-      metalness: 0.05
+      roughness: 0.28,
+      metalness: 0.03
     })
   );
   screenGlass.position.set(0, 1.26, 0.525);
@@ -390,7 +465,7 @@ function buildGameBoy() {
     new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.08
+      opacity: 0.035
     })
   );
   screenShine.position.set(0, 1.26, 0.552);
@@ -409,10 +484,10 @@ function buildGameBoy() {
   buttons.dpad.position.set(-1.0, -1.28, 0.55);
   group.add(buttons.dpad);
 
-  addControlHitbox(group, "up", -1.0, -0.94, 0.72, 0.52, 0.52);
-  addControlHitbox(group, "down", -1.0, -1.62, 0.72, 0.52, 0.52);
-  addControlHitbox(group, "left", -1.34, -1.28, 0.72, 0.52, 0.52);
-  addControlHitbox(group, "right", -0.66, -1.28, 0.72, 0.52, 0.52);
+  addControlHitbox(group, "up", -1.0, -0.94, 0.72, 0.58, 0.58);
+  addControlHitbox(group, "down", -1.0, -1.62, 0.72, 0.58, 0.58);
+  addControlHitbox(group, "left", -1.34, -1.28, 0.72, 0.58, 0.58);
+  addControlHitbox(group, "right", -0.66, -1.28, 0.72, 0.58, 0.58);
 
   buttons.a = makeButton(0xbe2450);
   buttons.a.position.set(1.14, -1.16, 0.58);
@@ -434,8 +509,7 @@ function buildGameBoy() {
   buttons.start.userData.control = "start";
   group.add(buttons.start);
   clickableControls.push(buttons.start);
-
-  addControlHitbox(group, "start", 0.38, -2.18, 0.72, 0.7, 0.42);
+  addControlHitbox(group, "start", 0.38, -2.18, 0.72, 0.78, 0.46);
 
   buttons.select = makePillButton(rubber);
   buttons.select.position.set(-0.38, -2.18, 0.56);
@@ -463,8 +537,8 @@ function buildGameBoy() {
   addScrews(group);
   addCornerDots(group);
 
-  group.rotation.x = -0.04;
-  group.rotation.y = -0.16;
+  group.rotation.x = -0.035;
+  group.rotation.y = -0.11;
 
   return group;
 }
@@ -628,17 +702,6 @@ function handleThreePointer(event) {
 function bindControls() {
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", releaseButtons);
-
-  document.querySelectorAll("[data-control]").forEach(button => {
-    button.addEventListener("pointerdown", event => {
-      event.preventDefault();
-      triggerControl(button.dataset.control);
-    });
-
-    button.addEventListener("pointerup", releaseButtons);
-    button.addEventListener("pointercancel", releaseButtons);
-    button.addEventListener("pointerleave", releaseButtons);
-  });
 }
 
 function handleKeyDown(event) {
@@ -703,7 +766,7 @@ function onResize() {
 function animate(time) {
   requestAnimationFrame(animate);
 
-  if (time - lastTick > TICK_MS) {
+  if (time - lastTick > currentTickSpeed()) {
     updateSnake();
     drawSnakeCanvas();
 
@@ -716,11 +779,11 @@ function animate(time) {
 
   if (gameBoy) {
     const isPhone = mount.clientWidth < 720;
-    const wobbleAmount = isPhone ? 0.025 : 0.06;
+    const wobbleAmount = isPhone ? 0.012 : 0.035;
 
-    gameBoy.rotation.y = -0.16 + Math.sin(time * 0.0007) * wobbleAmount;
-    gameBoy.rotation.x = -0.04 + Math.sin(time * 0.0009) * 0.018;
-    gameBoy.position.y = Math.sin(time * 0.001) * 0.045;
+    gameBoy.rotation.y = -0.11 + Math.sin(time * 0.0007) * wobbleAmount;
+    gameBoy.rotation.x = -0.035 + Math.sin(time * 0.0009) * 0.01;
+    gameBoy.position.y = Math.sin(time * 0.001) * 0.025;
   }
 
   renderer.render(scene, camera);
