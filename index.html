@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>SnakeBoy 3D</title>
 
   <link rel="stylesheet" href="style.css" />
@@ -33,11 +33,29 @@
       <div id="threeMount" class="three-mount"></div>
 
       <div class="status-panel">
-        <p id="statusText">Press Space to start</p>
+        <p id="statusText">Press Start to play</p>
         <p class="controls">
-          Move: Arrow Keys / WASD · Restart: Space
+          Phone: D-pad + Start · Keyboard: Arrow Keys / WASD / Space
         </p>
       </div>
+
+      <nav class="touch-controls" aria-label="SnakeBoy touch controls">
+        <div class="touch-dpad">
+          <button class="touch-btn touch-up" data-control="up" aria-label="Move up">▲</button>
+          <button class="touch-btn touch-left" data-control="left" aria-label="Move left">◀</button>
+          <button class="touch-btn touch-right" data-control="right" aria-label="Move right">▶</button>
+          <button class="touch-btn touch-down" data-control="down" aria-label="Move down">▼</button>
+        </div>
+
+        <div class="touch-actions">
+          <button class="touch-action touch-b" data-control="b" aria-label="B button">B</button>
+          <button class="touch-action touch-a" data-control="a" aria-label="A button">A</button>
+        </div>
+
+        <button class="touch-start" data-control="start" aria-label="Start or pause game">
+          START
+        </button>
+      </nav>
     </section>
 
     <canvas
