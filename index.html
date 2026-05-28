@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnakeBoy 3D</title>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    defer>
+  </script>
+
+  <script src="app.js" defer></script>
+</head>
+
+<body>
+  <main class="app-shell">
+    <header class="hud">
+      <div>
+        <p class="eyebrow">Definitely not a Game Boy</p>
+        <h1>SnakeBoy 3D</h1>
+      </div>
+
+      <div class="score-card">
+        <span>Score</span>
+        <strong id="scoreValue">0</strong>
+      </div>
+    </header>
+
+    <section class="stage-card">
+      <div id="threeMount" class="three-mount"></div>
+
+      <div class="status-panel">
+        <p id="statusText">Press Space to start</p>
+        <p class="controls">
+          Move: Arrow Keys / WASD · Restart: Space
+        </p>
+      </div>
+    </section>
+
+    <canvas
+      id="snakeCanvas"
+      width="256"
+      height="256"
+      aria-hidden="true">
+    </canvas>
+  </main>
+</body>
+</html>
