@@ -17,6 +17,8 @@ let running;
 let gameOver;
 let paused;
 let lastTick = 0;
+let inputLocked = false;
+let screenFlash = 0;
 
 let scene;
 let camera;
@@ -74,6 +76,7 @@ function startPauseRestart() {
     running = true;
     paused = false;
     pressButton("start");
+    screenFlash = 1;
     return;
   }
 
@@ -81,19 +84,45 @@ function startPauseRestart() {
     running = true;
     paused = false;
     pressButton("start");
+    screenFlash = 1;
     return;
   }
 
   paused = !paused;
   running = !paused;
   pressButton("start");
+  screenFlash = 1;
 }
 
 function setDirection(control) {
+  if (inputLocked) return;
+
   if (!running && !gameOver) {
     running = true;
     paused = false;
   }
+
+  if (gameOver || paused) return;
+
+  const requestedDirection = {
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 }
+  }[control];
+
+  if (!requestedDirection) return;
+
+  const isReverse =
+    requestedDirection.x + direction.x === 0 &&
+    requestedDirection.y + direction.y === 0;
+
+  if (isReverse) return;
+
+  nextDirection = requestedDirection;
+  inputLocked = true;
+  pressButton("dpad");
+}
 
   if (gameOver || paused) return;
 
@@ -128,6 +157,7 @@ function triggerControl(control) {
 
   if (control === "a" || control === "b") {
     pressButton(control);
+    screenFlash = 0.45;
 
     if (!running && !gameOver) {
       startPauseRestart();
@@ -143,6 +173,7 @@ function updateSnake() {
   if (!running || paused || gameOver) return;
 
   direction = nextDirection;
+  inputLocked = false;
 
   const head = snake[0];
 
@@ -190,8 +221,8 @@ function saveHighScore() {
 }
 
 function currentTickSpeed() {
-  const speedBoost = Math.floor(score / 50) * 6;
-  return Math.max(76, BASE_TICK_MS - speedBoost);
+  const level = Math.floor(score / 60);
+  return Math.max(78, BASE_TICK_MS - level * 5);
 }
 
 function drawSnakeCanvas() {
@@ -208,6 +239,8 @@ function drawSnakeCanvas() {
   }
 
   drawScreenVignette();
+
+  drawScreenFlash();
 
   if (!running && !paused && !gameOver && score === 0) {
     drawBootScreen();
@@ -303,6 +336,15 @@ function drawScreenVignette() {
   gradient.addColorStop(1, "rgba(15,56,15,0.16)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 256, 256);
+}
+
+function drawScreenFlash() {
+  if (screenFlash <= 0) return;
+
+  ctx.fillStyle = `rgba(216, 240, 154, ${screenFlash * 0.22})`;
+  ctx.fillRect(0, 0, 256, 256);
+
+  screenFlash = Math.max(0, screenFlash - 0.12);
 }
 
 function drawBootScreen() {
