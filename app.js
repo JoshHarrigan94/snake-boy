@@ -124,29 +124,6 @@ function setDirection(control) {
   pressButton("dpad");
 }
 
-  if (gameOver || paused) return;
-
-  if (control === "up" && direction.y !== 1) {
-    nextDirection = { x: 0, y: -1 };
-    pressButton("dpad");
-  }
-
-  if (control === "down" && direction.y !== -1) {
-    nextDirection = { x: 0, y: 1 };
-    pressButton("dpad");
-  }
-
-  if (control === "left" && direction.x !== 1) {
-    nextDirection = { x: -1, y: 0 };
-    pressButton("dpad");
-  }
-
-  if (control === "right" && direction.x !== -1) {
-    nextDirection = { x: 1, y: 0 };
-    pressButton("dpad");
-  }
-}
-
 function triggerControl(control) {
   if (!control) return;
 
