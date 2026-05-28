@@ -18,6 +18,7 @@ let gameOver;
 let paused;
 let lastTick = 0;
 let inputLocked = false;
+let lastTapTime = 0;
 let screenFlash = 0;
 let orbitControls;
 let pointerDownX = 0;
@@ -30,6 +31,7 @@ let renderer;
 let screenTexture;
 let gameBoy;
 let buttons = {};
+let ledLight;
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
@@ -317,6 +319,8 @@ function drawScreenVignette() {
   gradient.addColorStop(1, "rgba(15,56,15,0.16)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 256, 256);
+  ctx.fillStyle = "rgba(216, 240, 154, 0.035)";
+ctx.fillRect(0, Math.floor(Math.random() * 256), 256, 1);
 }
 
 function drawScreenFlash() {
@@ -380,8 +384,13 @@ function initThree() {
   });
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(mount.clientWidth, mount.clientHeight);
-  mount.appendChild(renderer.domElement);
+renderer.setSize(mount.clientWidth, mount.clientHeight);
+
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+mount.appendChild(renderer.domElement);
   
   orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 
@@ -392,14 +401,14 @@ orbitControls.enablePan = false;
 orbitControls.enableZoom = true;
 orbitControls.enableRotate = true;
 
-orbitControls.rotateSpeed = 0.35;
-orbitControls.zoomSpeed = 0.65;
+orbitControls.rotateSpeed = 0.32;
+orbitControls.zoomSpeed = 0.6;
 
-orbitControls.minDistance = 7.5;
-orbitControls.maxDistance = 15;
+orbitControls.minDistance = 8.2;
+orbitControls.maxDistance = 14.5;
 
-orbitControls.minPolarAngle = Math.PI * 0.35;
-orbitControls.maxPolarAngle = Math.PI * 0.65;
+orbitControls.minPolarAngle = Math.PI * 0.38;
+orbitControls.maxPolarAngle = Math.PI * 0.62;
 
 orbitControls.target.set(0, -0.1, 0);
 orbitControls.update();
@@ -473,10 +482,10 @@ function setCameraForViewport() {
 
 function buildAtmosphere() {
   const tableMaterial = new THREE.MeshStandardMaterial({
-    color: 0x15120f,
-    roughness: 0.82,
-    metalness: 0.02
-  });
+  color: 0x18130f,
+  roughness: 0.88,
+  metalness: 0.015
+});
 
   const table = new THREE.Mesh(
     new THREE.PlaneGeometry(18, 18),
@@ -500,6 +509,19 @@ function buildAtmosphere() {
 
   backdrop.position.set(0, 1.8, -5.2);
   scene.add(backdrop);
+  
+  const halo = new THREE.Mesh(
+  new THREE.CircleGeometry(3.2, 64),
+  new THREE.MeshBasicMaterial({
+    color: 0x9bbc0f,
+    transparent: true,
+    opacity: 0.055,
+    depthWrite: false
+  })
+);
+
+halo.position.set(0, 0.1, -2.15);
+scene.add(halo);
 
   const lcdGlow = new THREE.PointLight(0x9bbc0f, 0.75, 5.5);
   lcdGlow.position.set(0, 1.25, 1.05);
@@ -518,7 +540,7 @@ function buildAtmosphere() {
     new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
-      opacity: 0.36
+      opacity: 0.24
     })
   );
 
@@ -559,28 +581,37 @@ function roundedBox(width, height, depth, radius = 0.08, segments = 4) {
 function buildGameBoy() {
   const group = new THREE.Group();
 
-  const plastic = new THREE.MeshStandardMaterial({
+  const plastic = new THREE.MeshPhysicalMaterial({
   color: 0xded7c2,
-  roughness: 0.74,
-  metalness: 0.015
+  roughness: 0.82,
+  metalness: 0.015,
+  clearcoat: 0.08,
+  clearcoatRoughness: 0.85
 });
 
-  const darkPlastic = new THREE.MeshStandardMaterial({
-  color: 0x252a34,
-  roughness: 0.62,
-  metalness: 0.01
+  const darkPlastic = new THREE.MeshPhysicalMaterial({
+  color: 0x202631,
+  roughness: 0.58,
+  metalness: 0.015,
+  clearcoat: 0.12,
+  clearcoatRoughness: 0.72
 });
 
   const rubber = new THREE.MeshStandardMaterial({
-    color: 0x20232b,
-    roughness: 0.48
-  });
+  color: 0x171a20,
+  roughness: 0.86,
+  metalness: 0
+});
 
-  const red = new THREE.MeshStandardMaterial({
-    color: 0xde3156,
-    roughness: 0.35,
-    emissive: 0x330006
-  });
+  const red = new THREE.MeshPhysicalMaterial({
+  color: 0xff426d,
+  roughness: 0.22,
+  metalness: 0,
+  clearcoat: 0.7,
+  clearcoatRoughness: 0.18,
+  emissive: 0x5a0012,
+  emissiveIntensity: 0.55
+});
 
   const body = new THREE.Mesh(roundedBox(3.85, 5.85, 0.5, 0.18, 8), plastic);
   body.position.y = -0.05;
@@ -650,13 +681,41 @@ group.add(softInset);
   screenShine.rotation.z = -0.18;
   group.add(screenShine);
 
-  const led = new THREE.Mesh(new THREE.SphereGeometry(0.055, 20, 20), red);
-  led.position.set(-1.32, 1.78, 0.54);
-  group.add(led);
+  ledLight = new THREE.PointLight(0xff426d, 0.42, 1.1);
+ledLight.position.set(-1.32, 1.78, 0.82);
+group.add(ledLight);
 
   group.add(makeSmallLabel("BATTERY", -1.12, 1.77, 0.55, 0.26));
   group.add(makeSmallLabel("DOT MATRIX", 0, 0.17, 0.55, 0.3));
   group.add(makeSmallLabel("SNAKEBOY", 0, -0.17, 0.51, 0.55));
+
+const dpadWell = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.68, 0.68, 0.035, 48),
+  new THREE.MeshStandardMaterial({
+    color: 0xcfc7b1,
+    roughness: 0.85,
+    metalness: 0
+  })
+);
+dpadWell.rotation.x = Math.PI / 2;
+dpadWell.position.set(-1.0, -1.28, 0.545);
+group.add(dpadWell);
+
+const buttonWellA = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.34, 0.34, 0.035, 48),
+  new THREE.MeshStandardMaterial({
+    color: 0xcfc7b1,
+    roughness: 0.85,
+    metalness: 0
+  })
+);
+buttonWellA.rotation.x = Math.PI / 2;
+buttonWellA.position.set(1.14, -1.16, 0.575);
+group.add(buttonWellA);
+
+const buttonWellB = buttonWellA.clone();
+buttonWellB.position.set(0.58, -1.47, 0.575);
+group.add(buttonWellB);
 
   buttons.dpad = buildDpad(rubber);
   buttons.dpad.position.set(-1.0, -1.28, 0.61);
@@ -698,23 +757,66 @@ addControlHitbox(group, "select", -0.38, -2.18, 0.84, 0.92, 0.56);
   buttons.select.userData.control = "select";
   group.add(buttons.select);
 
-  group.add(makeSmallLabel("SELECT", -0.38, -2.42, 0.51, 0.22));
-  group.add(makeSmallLabel("START", 0.38, -2.42, 0.51, 0.22));
+  group.add(makeSmallLabel("B", 0.58, -1.9, 0.55, 0.18));
+group.add(makeSmallLabel("A", 1.14, -1.6, 0.55, 0.18));
 
   const speaker = buildSpeaker();
   speaker.position.set(1.0, -2.45, 0.52);
   group.add(speaker);
 
   const slot = new THREE.Mesh(
-    new THREE.BoxGeometry(2.35, 0.16, 0.07),
-    new THREE.MeshStandardMaterial({
-      color: 0xb7b09c,
-      roughness: 0.75
-    })
-  );
-  slot.position.set(0, 2.72, 0.36);
-  group.add(slot);
+  roundedBox(2.35, 0.16, 0.07, 0.04, 4),
+  new THREE.MeshStandardMaterial({
+    color: 0xb7b09c,
+    roughness: 0.78,
+    metalness: 0.01
+  })
+);
+slot.position.set(0, 2.72, 0.39);
+group.add(slot);
 
+const cartSeam = new THREE.Mesh(
+  roundedBox(2.65, 0.035, 0.025, 0.012, 3),
+  new THREE.MeshStandardMaterial({
+    color: 0x8e8674,
+    roughness: 0.82
+  })
+);
+cartSeam.position.set(0, 2.49, 0.43);
+group.add(cartSeam);
+
+const cartNotch = new THREE.Mesh(
+  roundedBox(0.42, 0.055, 0.032, 0.018, 3),
+  new THREE.MeshStandardMaterial({
+    color: 0x8e8674,
+    roughness: 0.82
+  })
+);
+cartNotch.position.set(0, 2.33, 0.435);
+group.add(cartNotch);
+
+function addSideRidges(group) {
+  const ridgeMat = new THREE.MeshStandardMaterial({
+    color: 0xc8c0aa,
+    roughness: 0.82
+  });
+
+  for (let i = 0; i < 5; i++) {
+    const left = new THREE.Mesh(
+      roundedBox(0.055, 0.34, 0.035, 0.018, 3),
+      ridgeMat
+    );
+
+    left.position.set(-1.79, 1.9 - i * 0.28, 0.48);
+    group.add(left);
+
+    const right = left.clone();
+    right.position.x = 1.79;
+    group.add(right);
+  }
+}
+
+  addSideRidges(group);
   addScrews(group);
   addCornerDots(group);
 
@@ -733,10 +835,14 @@ const horizontal = new THREE.Mesh(roundedBox(0.96, 0.3, 0.16, 0.06, 5), material
 
   const centre = new THREE.Mesh(
     new THREE.CylinderGeometry(0.18, 0.18, 0.05, 28),
-    new THREE.MeshStandardMaterial({
-      color: 0x15171d,
-      roughness: 0.5
-    })
+    new THREE.MeshPhysicalMaterial({
+  color: 0x0d120f,
+  roughness: 0.18,
+  metalness: 0.02,
+  clearcoat: 0.9,
+  clearcoatRoughness: 0.08,
+  reflectivity: 0.52
+})
   );
 
   centre.rotation.x = Math.PI / 2;
@@ -752,11 +858,13 @@ const horizontal = new THREE.Mesh(roundedBox(0.96, 0.3, 0.16, 0.06, 5), material
 function makeButton(color) {
   return new THREE.Mesh(
     new THREE.CylinderGeometry(0.27, 0.25, 0.16, 48),
-    new THREE.MeshStandardMaterial({
-      color,
-      roughness: 0.42,
-      metalness: 0.025
-    })
+    new THREE.MeshPhysicalMaterial({
+  color,
+  roughness: 0.38,
+  metalness: 0.02,
+  clearcoat: 0.28,
+  clearcoatRoughness: 0.45
+})
   );
 }
 
@@ -770,16 +878,20 @@ function makePillButton(material) {
 function buildSpeaker() {
   const group = new THREE.Group();
 
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0x8f8977,
-    roughness: 0.75
+  const holeMat = new THREE.MeshStandardMaterial({
+    color: 0x3b362f,
+    roughness: 0.9
   });
 
   for (let i = 0; i < 6; i++) {
-    const groove = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.42, 0.028), mat);
-    groove.position.x = i * 0.16;
-    groove.rotation.z = -0.46;
-    group.add(groove);
+    const hole = new THREE.Mesh(
+      roundedBox(0.055, 0.42, 0.035, 0.02, 3),
+      holeMat
+    );
+
+    hole.position.x = i * 0.16;
+    hole.rotation.z = -0.46;
+    group.add(hole);
   }
 
   group.position.x -= 0.4;
@@ -787,9 +899,15 @@ function buildSpeaker() {
 }
 
 function addScrews(group) {
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0xaaa38e,
-    roughness: 0.65
+  const screwMat = new THREE.MeshStandardMaterial({
+    color: 0x8f8877,
+    roughness: 0.72,
+    metalness: 0.12
+  });
+
+  const grooveMat = new THREE.MeshStandardMaterial({
+    color: 0x2a2824,
+    roughness: 0.8
   });
 
   const positions = [
@@ -800,10 +918,28 @@ function addScrews(group) {
   ];
 
   positions.forEach(([x, y]) => {
-    const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.025, 22), mat);
+    const screw = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.075, 0.075, 0.026, 32),
+      screwMat
+    );
+
     screw.rotation.x = Math.PI / 2;
-    screw.position.set(x, y, 0.55);
+    screw.position.set(x, y, 0.575);
     group.add(screw);
+
+    const grooveA = new THREE.Mesh(
+      roundedBox(0.105, 0.014, 0.008, 0.004, 2),
+      grooveMat
+    );
+    grooveA.position.set(x, y, 0.592);
+    group.add(grooveA);
+
+    const grooveB = new THREE.Mesh(
+      roundedBox(0.014, 0.105, 0.008, 0.004, 2),
+      grooveMat
+    );
+    grooveB.position.set(x, y, 0.593);
+    group.add(grooveB);
   });
 }
 
@@ -867,7 +1003,45 @@ function makeSmallLabel(text, x, y, z, size) {
   return mesh;
 }
 
+function resetCameraView() {
+  const width = mount.clientWidth;
+  const height = mount.clientHeight;
+  const isPhone = width < 720;
+  const isLandscape = width > height;
+
+  if (isPhone && !isLandscape) {
+    camera.fov = 39;
+    camera.position.set(0, 0.02, 11.2);
+  } else if (isPhone && isLandscape) {
+    camera.fov = 42;
+    camera.position.set(0, 0.12, 9.4);
+  } else {
+    camera.fov = 36;
+    camera.position.set(0, 0.2, 8.9);
+  }
+
+  camera.lookAt(0, -0.1, 0);
+  camera.updateProjectionMatrix();
+
+  if (orbitControls) {
+    orbitControls.target.set(0, -0.1, 0);
+    orbitControls.update();
+  }
+
+  screenFlash = 0.5;
+}
+
 function handleThreePointer(event) {
+  const now = performance.now();
+
+  if (now - lastTapTime < 280 && !pointerMoved) {
+    resetCameraView();
+    lastTapTime = 0;
+    return;
+  }
+
+  lastTapTime = now;
+
   if (pointerMoved) return;
 
   event.preventDefault();
@@ -980,6 +1154,10 @@ function animate(time) {
 
 if (orbitControls) {
   orbitControls.update();
+}
+
+if (ledLight) {
+  ledLight.intensity = 0.36 + Math.sin(time * 0.004) * 0.08;
 }
 
   renderer.render(scene, camera);
