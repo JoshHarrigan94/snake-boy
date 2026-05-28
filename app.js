@@ -77,6 +77,11 @@ function startPauseRestart() {
 }
 
 function setDirection(control) {
+  if (!running && !gameOver) {
+    running = true;
+    statusText.textContent = "SnakeBoy is alive. Somehow.";
+  }
+
   if (control === "up" && direction.y !== 1) {
     nextDirection = { x: 0, y: -1 };
     pressButton("dpad");
@@ -569,11 +574,15 @@ function bindControls() {
 
       const control = button.dataset.control;
 
-      if (control === "start" || control === "a" || control === "b") {
-        startPauseRestart();
-        pressButton(control === "start" ? "start" : control);
-        return;
-      }
+      if (control === "start") {
+  startPauseRestart();
+  return;
+}
+
+if (control === "a" || control === "b") {
+  pressButton(control);
+  return;
+}
 
       setDirection(control);
     });
