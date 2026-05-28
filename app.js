@@ -382,15 +382,26 @@ function initThree() {
 }
 
 function setCameraForViewport() {
-  const isPhone = mount.clientWidth < 720;
+  const width = mount.clientWidth;
+  const height = mount.clientHeight;
+  const isPhone = width < 720;
+  const isLandscape = width > height;
 
-  if (isPhone) {
-    camera.position.set(0, 0.15, 8.55);
+  if (isPhone && !isLandscape) {
+    camera.fov = 34;
+    camera.position.set(0, -0.05, 9.75);
+    camera.lookAt(0, -0.22, 0);
+  } else if (isPhone && isLandscape) {
+    camera.fov = 40;
+    camera.position.set(0, 0.12, 8.4);
+    camera.lookAt(0, -0.1, 0);
   } else {
-    camera.position.set(0, 0.5, 7.35);
+    camera.fov = 35;
+    camera.position.set(0, 0.28, 8.15);
+    camera.lookAt(0, -0.12, 0);
   }
 
-  camera.lookAt(0, -0.1, 0);
+  camera.updateProjectionMatrix();
 }
 
 function buildGameBoy() {
@@ -537,8 +548,9 @@ function buildGameBoy() {
   addScrews(group);
   addCornerDots(group);
 
-  group.rotation.x = -0.035;
-  group.rotation.y = -0.11;
+  group.rotation.x = -0.018;
+group.rotation.y = -0.055;
+group.position.y = 0.08;
 
   return group;
 }
@@ -778,13 +790,14 @@ function animate(time) {
   }
 
   if (gameBoy) {
-    const isPhone = mount.clientWidth < 720;
-    const wobbleAmount = isPhone ? 0.012 : 0.035;
+  const isPhone = mount.clientWidth < 720;
+  const wobbleAmount = isPhone ? 0.004 : 0.018;
+  const floatAmount = isPhone ? 0.008 : 0.018;
 
-    gameBoy.rotation.y = -0.11 + Math.sin(time * 0.0007) * wobbleAmount;
-    gameBoy.rotation.x = -0.035 + Math.sin(time * 0.0009) * 0.01;
-    gameBoy.position.y = Math.sin(time * 0.001) * 0.025;
-  }
+  gameBoy.rotation.y = -0.055 + Math.sin(time * 0.0007) * wobbleAmount;
+  gameBoy.rotation.x = -0.018 + Math.sin(time * 0.0009) * 0.004;
+  gameBoy.position.y = 0.08 + Math.sin(time * 0.001) * floatAmount;
+}
 
   renderer.render(scene, camera);
 }
