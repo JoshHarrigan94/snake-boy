@@ -528,6 +528,34 @@ function buildAtmosphere() {
   scene.add(shadow);
 }
 
+function roundedBox(width, height, depth, radius = 0.08, segments = 4) {
+  if (THREE.RoundedBoxGeometry) {
+    return new THREE.RoundedBoxGeometry(
+      width,
+      height,
+      depth,
+      segments,
+      radius
+    );
+  }
+
+  return new THREE.BoxGeometry(width, height, depth);
+}
+
+function roundedBox(width, height, depth, radius = 0.08, segments = 4) {
+  if (THREE.RoundedBoxGeometry) {
+    return new THREE.RoundedBoxGeometry(
+      width,
+      height,
+      depth,
+      segments,
+      radius
+    );
+  }
+
+  return new THREE.BoxGeometry(width, height, depth);
+}
+
 function buildGameBoy() {
   const group = new THREE.Group();
 
@@ -554,16 +582,16 @@ function buildGameBoy() {
     emissive: 0x330006
   });
 
-  const body = new THREE.Mesh(new THREE.BoxGeometry(3.85, 5.85, 0.48), plastic);
+  const body = new THREE.Mesh(roundedBox(3.85, 5.85, 0.5, 0.18, 8), plastic);
   body.position.y = -0.05;
   group.add(body);
 
-  const facePlate = new THREE.Mesh(new THREE.BoxGeometry(3.58, 5.52, 0.08), plastic);
+  const facePlate = new THREE.Mesh(roundedBox(3.58, 5.52, 0.09, 0.15, 6), plastic);
   facePlate.position.set(0, -0.05, 0.29);
   group.add(facePlate);
   
   const softInset = new THREE.Mesh(
-  new THREE.BoxGeometry(3.34, 5.26, 0.035),
+  roundedBox(3.34, 5.26, 0.04, 0.12, 5),
   new THREE.MeshStandardMaterial({
     color: 0xe7dfc8,
     roughness: 0.8,
@@ -574,7 +602,7 @@ softInset.position.set(0, -0.05, 0.345);
 group.add(softInset);
 
   const lowerLip = new THREE.Mesh(
-    new THREE.BoxGeometry(3.7, 0.18, 0.08),
+    roundedBox(3.7, 0.18, 0.08, 0.05, 4),
     new THREE.MeshStandardMaterial({
       color: 0xc3bda8,
       roughness: 0.72
@@ -583,12 +611,15 @@ group.add(softInset);
   lowerLip.position.set(0, -2.82, 0.35);
   group.add(lowerLip);
 
-  const screenBezel = new THREE.Mesh(new THREE.BoxGeometry(3.15, 2.38, 0.16), darkPlastic);
+  const screenBezel = new THREE.Mesh(
+  roundedBox(3.15, 2.38, 0.18, 0.12, 6),
+  darkPlastic
+);
   screenBezel.position.set(0, 1.33, 0.42);
   group.add(screenBezel);
 
   const screenGlass = new THREE.Mesh(
-    new THREE.BoxGeometry(2.48, 1.84, 0.035),
+    roundedBox(2.48, 1.84, 0.04, 0.06, 5),
     new THREE.MeshStandardMaterial({
       color: 0x151913,
       roughness: 0.28,
@@ -697,8 +728,8 @@ group.position.y = 0.08;
 function buildDpad(material) {
   const group = new THREE.Group();
 
-  const vertical = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.96, 0.16), material);
-  const horizontal = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.3, 0.16), material);
+  const vertical = new THREE.Mesh(roundedBox(0.3, 0.96, 0.16, 0.06, 5), material);
+const horizontal = new THREE.Mesh(roundedBox(0.96, 0.3, 0.16, 0.06, 5), material);
 
   const centre = new THREE.Mesh(
     new THREE.CylinderGeometry(0.18, 0.18, 0.05, 28),
@@ -720,17 +751,20 @@ function buildDpad(material) {
 
 function makeButton(color) {
   return new THREE.Mesh(
-    new THREE.CylinderGeometry(0.26, 0.26, 0.16, 44),
+    new THREE.CylinderGeometry(0.27, 0.25, 0.16, 48),
     new THREE.MeshStandardMaterial({
       color,
-      roughness: 0.46,
-      metalness: 0.02
+      roughness: 0.42,
+      metalness: 0.025
     })
   );
 }
 
 function makePillButton(material) {
-  return new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.17, 0.11), material);
+  return new THREE.Mesh(
+    roundedBox(0.56, 0.17, 0.11, 0.08, 5),
+    material
+  );
 }
 
 function buildSpeaker() {
