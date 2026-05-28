@@ -363,7 +363,7 @@ function drawMessagePanel(title, subtitle) {
 
 function initThree() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0c0e13);
+  scene.background = new THREE.Color(0x090a0d);
 
   camera = new THREE.PerspectiveCamera(
     38,
@@ -418,6 +418,8 @@ orbitControls.update();
   const warm = new THREE.PointLight(0xffd8aa, 0.7, 10);
   warm.position.set(3, -2, 4);
   scene.add(warm);
+  
+  buildAtmosphere();
 
   screenTexture = new THREE.CanvasTexture(snakeCanvas);
   screenTexture.magFilter = THREE.NearestFilter;
@@ -467,6 +469,63 @@ function setCameraForViewport() {
   }
 
   camera.updateProjectionMatrix();
+}
+
+function buildAtmosphere() {
+  const tableMaterial = new THREE.MeshStandardMaterial({
+    color: 0x15120f,
+    roughness: 0.82,
+    metalness: 0.02
+  });
+
+  const table = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 18),
+    tableMaterial
+  );
+
+  table.rotation.x = -Math.PI / 2;
+  table.position.set(0, -3.05, -0.4);
+  scene.add(table);
+
+  const backdropMaterial = new THREE.MeshBasicMaterial({
+    color: 0x10131a,
+    transparent: true,
+    opacity: 0.9
+  });
+
+  const backdrop = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 10),
+    backdropMaterial
+  );
+
+  backdrop.position.set(0, 1.8, -5.2);
+  scene.add(backdrop);
+
+  const lcdGlow = new THREE.PointLight(0x9bbc0f, 0.75, 5.5);
+  lcdGlow.position.set(0, 1.25, 1.05);
+  scene.add(lcdGlow);
+
+  const lampGlow = new THREE.PointLight(0xffc58a, 1.1, 9);
+  lampGlow.position.set(-3.5, 2.8, 3.4);
+  scene.add(lampGlow);
+
+  const coolRim = new THREE.PointLight(0x7aa7ff, 0.42, 8);
+  coolRim.position.set(3.8, 1.2, 2.4);
+  scene.add(coolRim);
+
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(1.9, 48),
+    new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.36
+    })
+  );
+
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.set(0, -2.98, 0.04);
+  shadow.scale.set(1.25, 0.42, 1);
+  scene.add(shadow);
 }
 
 function buildGameBoy() {
