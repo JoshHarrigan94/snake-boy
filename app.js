@@ -408,21 +408,22 @@ function initThree() {
 function setCameraForViewport() {
   const width = mount.clientWidth;
   const height = mount.clientHeight;
+
   const isPhone = width < 720;
   const isLandscape = width > height;
 
   if (isPhone && !isLandscape) {
-    camera.fov = 34;
-    camera.position.set(0, -0.05, 9.75);
-    camera.lookAt(0, -0.22, 0);
-  } else if (isPhone && isLandscape) {
-    camera.fov = 40;
-    camera.position.set(0, 0.12, 8.4);
-    camera.lookAt(0, -0.1, 0);
-  } else {
-    camera.fov = 35;
-    camera.position.set(0, 0.28, 8.15);
+    camera.fov = 39;
+    camera.position.set(0, 0.02, 11.2);
     camera.lookAt(0, -0.12, 0);
+  } else if (isPhone && isLandscape) {
+    camera.fov = 42;
+    camera.position.set(0, 0.12, 9.4);
+    camera.lookAt(0, -0.08, 0);
+  } else {
+    camera.fov = 36;
+    camera.position.set(0, 0.2, 8.9);
+    camera.lookAt(0, -0.1, 0);
   }
 
   camera.updateProjectionMatrix();
