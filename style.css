@@ -1,9 +1,5 @@
 /* =====================================================
-   SNAKEBOY 3D — PREMIUM STYLE SYSTEM
-===================================================== */
-
-/* =====================================================
-   01. RESET + DEVICE SAFETY
+   SNAKEBOY 3D — CLEAN FULL-SCREEN STYLE
 ===================================================== */
 
 *,
@@ -24,405 +20,82 @@ body {
   overscroll-behavior: none;
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-button {
-  border: 0;
-  cursor: pointer;
-}
-
-canvas {
-  display: block;
-}
-
-/* =====================================================
-   02. DESIGN TOKENS
-===================================================== */
-
-:root {
-  --bg-900: #07080b;
-  --bg-850: #0b0d12;
-  --bg-800: #10131a;
-  --bg-700: #161b25;
-
-  --cream-100: #f2ead2;
-  --cream-200: #ddd5bd;
-  --cream-300: #c7bea6;
-  --cream-400: #a99f88;
-
-  --plastic-shadow: #827967;
-
-  --lcd-100: #d8f09a;
-  --lcd-200: #b7d86d;
-  --lcd-300: #9bbc0f;
-  --lcd-400: #6d8f2a;
-  --lcd-500: #306230;
-  --lcd-600: #0f380f;
-
-  --pink-300: #ff6f9d;
-  --pink-400: #e64d7e;
-  --pink-500: #be2450;
-
-  --blue-300: #7aa7ff;
-  --amber-300: #ffd18b;
-
-  --text: #f7f3ea;
-  --text-soft: #d8d1c2;
-  --muted: #9aa1b3;
-  --muted-2: #6f788d;
-
-  --panel: rgba(255, 255, 255, 0.065);
-  --panel-strong: rgba(255, 255, 255, 0.105);
-  --panel-dark: rgba(0, 0, 0, 0.42);
-
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --border-lcd: rgba(184, 216, 109, 0.28);
-
-  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.34);
-  --shadow-heavy: 0 28px 90px rgba(0, 0, 0, 0.58);
-  --shadow-lcd: 0 0 34px rgba(155, 188, 15, 0.18);
-
-  --radius-xl: 32px;
-  --radius-lg: 24px;
-  --radius-md: 18px;
-  --radius-sm: 12px;
-
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.2, 1.4, 0.35, 1);
-
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-top: env(safe-area-inset-top, 0px);
-}
-
-/* =====================================================
-   03. BASE BODY
-===================================================== */
-
 body {
-  position: relative;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   min-height: 100dvh;
-
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  color: var(--text);
-
   background:
-    radial-gradient(circle at 50% -20%, rgba(122, 167, 255, 0.24), transparent 34%),
-    radial-gradient(circle at 15% 15%, rgba(255, 209, 139, 0.11), transparent 28%),
-    radial-gradient(circle at 84% 24%, rgba(155, 188, 15, 0.12), transparent 32%),
-    linear-gradient(180deg, var(--bg-800), var(--bg-900) 72%);
+    radial-gradient(circle at 50% 18%, rgba(155, 188, 15, 0.13), transparent 32%),
+    radial-gradient(circle at 50% 105%, rgba(255, 111, 157, 0.08), transparent 34%),
+    linear-gradient(180deg, #10131a 0%, #07080b 100%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f7f3ea;
 }
 
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-
   pointer-events: none;
-
   background:
-    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-
-  background-size: 42px 42px;
-  mask-image: radial-gradient(circle at center, black, transparent 74%);
-  opacity: 0.65;
+    radial-gradient(circle at center, transparent 48%, rgba(0, 0, 0, 0.42) 100%);
+  opacity: 0.8;
 }
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-
-  pointer-events: none;
-
-  background:
-    radial-gradient(circle at center, transparent 45%, rgba(0, 0, 0, 0.52) 100%),
-    linear-gradient(rgba(255,255,255,0.018) 50%, rgba(0,0,0,0.018) 50%);
-
-  background-size: 100% 100%, 100% 4px;
-  opacity: 0.86;
-}
-
-/* =====================================================
-   04. APP SHELL
-===================================================== */
 
 .app-shell {
   position: relative;
-  z-index: 1;
-
-  width: min(1220px, 100%);
+  width: 100vw;
   height: 100dvh;
-
-  display: flex;
-  flex-direction: column;
-
   padding:
-    calc(14px + var(--safe-top))
-    14px
-    calc(14px + var(--safe-bottom));
-
-  gap: 12px;
+    env(safe-area-inset-top, 0px)
+    env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px)
+    env(safe-area-inset-left, 0px);
 }
-
-.app-shell::before,
-.app-shell::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  z-index: -1;
-
-  width: 320px;
-  height: 320px;
-
-  border-radius: 999px;
-  filter: blur(58px);
-  opacity: 0.48;
-
-  animation: orbFloat 8s var(--ease-in-out, ease-in-out) infinite alternate;
-}
-
-.app-shell::before {
-  left: -110px;
-  top: 22%;
-  background: rgba(155, 188, 15, 0.18);
-}
-
-.app-shell::after {
-  right: -130px;
-  bottom: 14%;
-  background: rgba(255, 111, 157, 0.13);
-  animation-delay: -3s;
-}
-
-@keyframes orbFloat {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  to {
-    transform: translate3d(18px, -22px, 0) scale(1.08);
-  }
-}
-
-/* =====================================================
-   05. HUD
-===================================================== */
-
-.hud {
-  position: relative;
-  z-index: 6;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 14px;
-
-  padding: 13px 15px;
-
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.035)),
-    rgba(7, 8, 11, 0.48);
-
-  backdrop-filter: blur(18px) saturate(1.2);
-  box-shadow: var(--shadow-soft);
-}
-
-.hud::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-
-  border-radius: calc(var(--radius-lg) - 1px);
-  pointer-events: none;
-
-  background:
-    linear-gradient(90deg, rgba(155, 188, 15, 0.18), transparent 38%, rgba(255, 111, 157, 0.11));
-  opacity: 0.48;
-  mask-image: linear-gradient(#000, transparent 68%);
-}
-
-.eyebrow {
-  margin-bottom: 6px;
-
-  font-size: 0.68rem;
-  font-weight: 850;
-  line-height: 1;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-
-  color: var(--lcd-200);
-  text-shadow: 0 0 18px rgba(155, 188, 15, 0.18);
-}
-
-h1 {
-  font-size: clamp(1.78rem, 7.4vw, 3.55rem);
-  line-height: 0.92;
-  font-weight: 920;
-  letter-spacing: -0.065em;
-
-  color: var(--text);
-
-  text-shadow:
-    0 1px 0 rgba(255,255,255,0.18),
-    0 14px 30px rgba(0,0,0,0.38);
-}
-
-.score-card {
-  position: relative;
-
-  min-width: 92px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  padding: 10px 13px;
-
-  border-radius: 18px;
-  border: 1px solid rgba(184, 216, 109, 0.24);
-
-  background:
-    radial-gradient(circle at 50% 0%, rgba(216, 240, 154, 0.24), transparent 68%),
-    linear-gradient(145deg, rgba(155, 188, 15, 0.18), rgba(15, 56, 15, 0.16)),
-    rgba(0, 0, 0, 0.18);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.13),
-    var(--shadow-lcd);
-}
-
-.score-card::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-
-  border-radius: 13px;
-  pointer-events: none;
-
-  background:
-    linear-gradient(rgba(15,56,15,0.08) 50%, transparent 50%);
-  background-size: 100% 4px;
-  opacity: 0.35;
-}
-
-.score-card span {
-  position: relative;
-  z-index: 1;
-
-  margin-bottom: 2px;
-
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-
-  color: var(--lcd-100);
-  opacity: 0.84;
-}
-
-.score-card strong {
-  position: relative;
-  z-index: 1;
-
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 1.78rem;
-  line-height: 1;
-  font-weight: 950;
-
-  color: var(--lcd-100);
-  text-shadow:
-    0 0 12px rgba(155, 188, 15, 0.28),
-    0 2px 0 rgba(15,56,15,0.45);
-}
-
-/* =====================================================
-   06. STAGE / 3D VIEWPORT
-===================================================== */
 
 .stage-card {
   position: relative;
-
-  flex: 1;
-  min-height: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-
   background:
-    radial-gradient(circle at 50% 22%, rgba(255,255,255,0.085), transparent 34%),
-    radial-gradient(circle at 50% 62%, rgba(155, 188, 15, 0.10), transparent 42%),
-    linear-gradient(180deg, rgba(22,27,37,0.94), rgba(7,8,11,0.96));
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    inset 0 -60px 90px rgba(0,0,0,0.36),
-    var(--shadow-heavy);
-
-  isolation: isolate;
+    radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.055), transparent 35%),
+    radial-gradient(circle at 50% 55%, rgba(155, 188, 15, 0.08), transparent 44%),
+    transparent;
 }
 
 .stage-card::before {
   content: "";
   position: absolute;
-  inset: 0;
-  z-index: 2;
-
+  left: 50%;
+  bottom: 5%;
+  width: min(72vw, 420px);
+  height: 48px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  filter: blur(18px);
+  opacity: 0.75;
   pointer-events: none;
-
-  background:
-    radial-gradient(circle at 50% 36%, transparent 0 32%, rgba(0,0,0,0.16) 66%, rgba(0,0,0,0.48) 100%),
-    linear-gradient(120deg, rgba(255,255,255,0.08), transparent 28%, transparent 68%, rgba(155,188,15,0.08));
-
-  mix-blend-mode: screen;
-  opacity: 0.7;
 }
 
 .stage-card::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 3;
-
   pointer-events: none;
-
   background:
-    linear-gradient(rgba(255,255,255,0.016) 50%, rgba(0,0,0,0.035) 50%),
-    radial-gradient(circle at 50% 45%, transparent 55%, rgba(0,0,0,0.35));
-
-  background-size: 100% 5px, 100% 100%;
-  opacity: 0.55;
+    linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.055),
+      transparent 24%,
+      transparent 72%,
+      rgba(155, 188, 15, 0.04)
+    );
+  opacity: 0.45;
 }
 
 .three-mount {
   position: relative;
   z-index: 1;
-
   width: 100%;
   height: 100%;
 }
@@ -430,611 +103,32 @@ h1 {
 .three-mount canvas {
   width: 100% !important;
   height: 100% !important;
+  display: block;
 }
-
-/* =====================================================
-   07. STATUS PANEL
-===================================================== */
-
-.status-panel {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 130px;
-  z-index: 8;
-
-  padding: 12px 14px;
-
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.11);
-
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025)),
-    rgba(0, 0, 0, 0.48);
-
-  backdrop-filter: blur(14px) saturate(1.1);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    0 12px 34px rgba(0,0,0,0.34);
-
-  pointer-events: none;
-}
-
-.status-panel::before {
-  content: "";
-  position: absolute;
-  left: 14px;
-  top: 13px;
-
-  width: 7px;
-  height: 7px;
-
-  border-radius: 999px;
-  background: var(--lcd-300);
-  box-shadow: 0 0 14px rgba(155,188,15,0.75);
-}
-
-#statusText {
-  padding-left: 16px;
-  margin-bottom: 6px;
-
-  font-size: 0.92rem;
-  line-height: 1.18;
-  font-weight: 900;
-
-  color: var(--text);
-}
-
-.controls {
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.4;
-}
-
-/* =====================================================
-   08. TOUCH CONTROLS
-===================================================== */
-
-.touch-controls {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(12px + var(--safe-bottom));
-  z-index: 12;
-
-  height: 108px;
-
-  display: grid;
-  grid-template-columns: 126px 1fr 126px;
-  align-items: center;
-
-  padding: 0 16px;
-
-  pointer-events: none;
-}
-
-.touch-dpad,
-.touch-actions,
-.touch-start {
-  pointer-events: auto;
-}
-
-.touch-dpad {
-  position: relative;
-
-  width: 118px;
-  height: 96px;
-
-  border-radius: 28px;
-
-  background:
-    radial-gradient(circle at center, rgba(0,0,0,0.32), transparent 58%);
-}
-
-.touch-btn,
-.touch-action,
-.touch-start {
-  position: relative;
-
-  display: grid;
-  place-items: center;
-
-  color: rgba(255,255,255,0.92);
-
-  background:
-    linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.025)),
-    rgba(0,0,0,0.62);
-
-  border: 1px solid rgba(255,255,255,0.16);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    inset 0 -6px 12px rgba(0,0,0,0.28),
-    0 10px 26px rgba(0,0,0,0.34);
-
-  backdrop-filter: blur(12px);
-
-  user-select: none;
-  touch-action: none;
-
-  transition:
-    transform 120ms var(--ease-out),
-    background 120ms var(--ease-out),
-    box-shadow 120ms var(--ease-out),
-    border-color 120ms var(--ease-out);
-}
-
-.touch-btn::before,
-.touch-action::before,
-.touch-start::before {
-  content: "";
-  position: absolute;
-  inset: 2px;
-
-  border-radius: inherit;
-  pointer-events: none;
-
-  background: linear-gradient(180deg, rgba(255,255,255,0.12), transparent 56%);
-}
-
-.touch-btn {
-  position: absolute;
-
-  width: 44px;
-  height: 44px;
-
-  border-radius: 14px;
-
-  font-size: 1rem;
-  line-height: 1;
-  font-weight: 950;
-}
-
-.touch-up {
-  left: 37px;
-  top: 0;
-}
-
-.touch-left {
-  left: 0;
-  top: 46px;
-}
-
-.touch-right {
-  right: 0;
-  top: 46px;
-}
-
-.touch-down {
-  left: 37px;
-  top: 46px;
-}
-
-.touch-actions {
-  grid-column: 3;
-
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-
-  gap: 14px;
-}
-
-.touch-action {
-  width: 56px;
-  height: 56px;
-
-  border-radius: 999px;
-
-  font-size: 1rem;
-  font-weight: 950;
-  letter-spacing: -0.02em;
-
-  color: #ffe8f0;
-
-  background:
-    radial-gradient(circle at 35% 24%, rgba(255,255,255,0.28), transparent 30%),
-    linear-gradient(145deg, rgba(255,111,157,0.8), rgba(190,36,80,0.82)),
-    rgba(0,0,0,0.54);
-
-  border-color: rgba(255, 151, 184, 0.34);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.28),
-    inset 0 -8px 14px rgba(91,0,29,0.35),
-    0 12px 28px rgba(190,36,80,0.22),
-    0 10px 26px rgba(0,0,0,0.32);
-}
-
-.touch-a {
-  transform: translateY(-13px);
-}
-
-.touch-b {
-  transform: translateY(10px);
-}
-
-.touch-start {
-  grid-column: 2;
-  justify-self: center;
-  align-self: end;
-
-  min-width: 92px;
-  height: 36px;
-
-  padding: 0 18px;
-
-  border-radius: 999px;
-
-  font-size: 0.7rem;
-  font-weight: 950;
-  letter-spacing: 0.11em;
-
-  color: var(--lcd-100);
-
-  background:
-    linear-gradient(145deg, rgba(155,188,15,0.19), rgba(0,0,0,0.56)),
-    rgba(0,0,0,0.58);
-
-  border-color: rgba(184,216,109,0.22);
-}
-
-/* =====================================================
-   09. INTERACTION STATES
-===================================================== */
-
-.touch-btn:active,
-.touch-action:active,
-.touch-start:active {
-  background:
-    linear-gradient(145deg, rgba(155,188,15,0.28), rgba(255,255,255,0.035)),
-    rgba(0,0,0,0.7);
-
-  border-color: rgba(184,216,109,0.36);
-
-  box-shadow:
-    inset 0 2px 8px rgba(0,0,0,0.34),
-    0 5px 14px rgba(0,0,0,0.3);
-}
-
-.touch-btn:active {
-  transform: scale(0.93);
-}
-
-.touch-a:active {
-  transform: translateY(-13px) scale(0.93);
-}
-
-.touch-b:active {
-  transform: translateY(10px) scale(0.93);
-}
-
-.touch-start:active {
-  transform: scale(0.94);
-}
-
-.touch-btn:focus-visible,
-.touch-action:focus-visible,
-.touch-start:focus-visible {
-  outline: 2px solid var(--lcd-200);
-  outline-offset: 3px;
-}
-
-/* =====================================================
-   10. HIDDEN SNAKE CANVAS
-===================================================== */
 
 #snakeCanvas {
   position: absolute;
-
-  width: 256px;
-  height: 256px;
-
   left: -9999px;
   top: -9999px;
-
+  width: 256px;
+  height: 256px;
   opacity: 0;
   pointer-events: none;
 }
 
-/* =====================================================
-   11. POLISH EFFECTS
-===================================================== */
-
-@keyframes lcdPulse {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.13),
-      0 0 22px rgba(155,188,15,0.14);
-  }
-
-  50% {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.18),
-      0 0 38px rgba(155,188,15,0.25);
+@media (max-width: 430px) {
+  .stage-card::before {
+    bottom: 8%;
+    width: 78vw;
   }
 }
 
-.score-card {
-  animation: lcdPulse 3.8s ease-in-out infinite;
-}
-
-@keyframes panelDrift {
-  from {
-    background-position: 0 0;
-  }
-
-  to {
-    background-position: 0 32px;
+@media (orientation: landscape) and (max-height: 520px) {
+  .stage-card::before {
+    bottom: 3%;
+    width: 46vw;
   }
 }
-
-.stage-card::after {
-  animation: panelDrift 2.8s linear infinite;
-}
-
-/* =====================================================
-   12. SMALL PHONE TUNING
-===================================================== */
-
-@media (max-width: 380px) {
-  .app-shell {
-    padding-left: 10px;
-    padding-right: 10px;
-    gap: 10px;
-  }
-
-  .hud {
-    padding: 11px 12px;
-    border-radius: 20px;
-  }
-
-  .eyebrow {
-    font-size: 0.59rem;
-    letter-spacing: 0.12em;
-  }
-
-  h1 {
-    font-size: 1.62rem;
-  }
-
-  .score-card {
-    min-width: 78px;
-    padding: 9px 10px;
-  }
-
-  .score-card span {
-    font-size: 0.62rem;
-  }
-
-  .score-card strong {
-    font-size: 1.44rem;
-  }
-
-  .status-panel {
-    bottom: 124px;
-    padding: 10px 12px;
-  }
-
-  #statusText {
-    font-size: 0.84rem;
-  }
-
-  .controls {
-    font-size: 0.72rem;
-  }
-
-  .touch-controls {
-    grid-template-columns: 112px 1fr 112px;
-    height: 102px;
-    padding: 0 10px;
-  }
-
-  .touch-dpad {
-    width: 108px;
-    height: 90px;
-  }
-
-  .touch-btn {
-    width: 40px;
-    height: 40px;
-  }
-
-  .touch-up,
-  .touch-down {
-    left: 34px;
-  }
-
-  .touch-left,
-  .touch-right,
-  .touch-down {
-    top: 43px;
-  }
-
-  .touch-action {
-    width: 50px;
-    height: 50px;
-  }
-
-  .touch-actions {
-    gap: 10px;
-  }
-}
-
-/* =====================================================
-   13. PHONE LANDSCAPE
-===================================================== */
-
-@media (max-height: 520px) and (orientation: landscape) {
-  .app-shell {
-    padding: 8px 10px;
-    gap: 8px;
-  }
-
-  .hud {
-    padding: 8px 12px;
-  }
-
-  .eyebrow {
-    display: none;
-  }
-
-  h1 {
-    font-size: 1.5rem;
-  }
-
-  .score-card {
-    min-width: 78px;
-    padding: 8px 10px;
-  }
-
-  .score-card strong {
-    font-size: 1.35rem;
-  }
-
-  .status-panel {
-    left: 12px;
-    right: auto;
-    bottom: 12px;
-    max-width: 320px;
-  }
-
-  .touch-controls {
-    height: 96px;
-    bottom: 6px;
-  }
-}
-
-/* =====================================================
-   14. TABLET / DESKTOP
-===================================================== */
-
-@media (min-width: 720px) {
-  .app-shell {
-    padding: 22px;
-    gap: 18px;
-  }
-
-  .hud {
-    padding: 18px 22px;
-    border-radius: 28px;
-  }
-
-  .eyebrow {
-    font-size: 0.76rem;
-    margin-bottom: 8px;
-  }
-
-  h1 {
-    font-size: clamp(2.4rem, 4.4vw, 4.2rem);
-  }
-
-  .score-card {
-    min-width: 122px;
-    padding: 14px 18px;
-  }
-
-  .score-card strong {
-    font-size: 2.12rem;
-  }
-
-  .stage-card {
-    border-radius: 36px;
-  }
-
-  .status-panel {
-    left: 24px;
-    right: auto;
-    bottom: 24px;
-
-    max-width: 450px;
-
-    padding: 15px 17px;
-  }
-
-  #statusText {
-    font-size: 1rem;
-  }
-
-  .controls {
-    font-size: 0.88rem;
-  }
-
-  .touch-controls {
-    height: 120px;
-    bottom: 22px;
-    padding: 0 26px;
-    opacity: 0.78;
-  }
-
-  .touch-controls:hover {
-    opacity: 1;
-  }
-
-  .touch-dpad {
-    width: 126px;
-    height: 104px;
-  }
-
-  .touch-btn {
-    width: 48px;
-    height: 48px;
-  }
-
-  .touch-up,
-  .touch-down {
-    left: 39px;
-  }
-
-  .touch-left,
-  .touch-right,
-  .touch-down {
-    top: 50px;
-  }
-
-  .touch-action {
-    width: 62px;
-    height: 62px;
-  }
-
-  .touch-start {
-    height: 38px;
-  }
-}
-
-/* =====================================================
-   15. LARGE DESKTOP
-===================================================== */
-
-@media (min-width: 1100px) {
-  .app-shell {
-    padding: 28px;
-  }
-
-  .hud {
-    max-width: 1120px;
-    width: 100%;
-    margin: 0 auto;
-  }
-
-  .stage-card {
-    max-width: 1120px;
-    width: 100%;
-    margin: 0 auto;
-  }
-
-  .touch-controls {
-    max-width: 960px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-}
-
-/* =====================================================
-   16. REDUCED MOTION
-===================================================== */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1042,7 +136,7 @@ h1 {
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
